@@ -24,7 +24,6 @@ public class ClientHandler extends Thread {
 	public boolean isPaired = false;
 	private boolean isQuit = false;
 	private WaitMonitor waiterPair;
-	private WaitMonitor waiterMojBroj;
 	
 	public MyNumbers myNumbers;
 	
@@ -33,6 +32,10 @@ public class ClientHandler extends Thread {
 	public int mojBrojFinishedNumber;
 	public int mojBrojFinishedNumberOfPair;
 	
+	
+	public WaitMonitor getWaiterPair() {
+		return waiterPair;
+	}
 	public String getUsername() {
 		return username;
 	}
@@ -46,10 +49,8 @@ public class ClientHandler extends Thread {
 			return true;
 		} else return false;
 	}
-	ClientHandler(Socket socketCommunication, WaitMonitor waiterPair, WaitMonitor waiterMojBroj){
+	ClientHandler(Socket socketCommunication) {
 		this.socketCommunication = socketCommunication;
-		this.waiterPair = waiterPair;
-		this.waiterMojBroj = waiterMojBroj;
 	}
 	ClientHandler(String username){
 		this.username = username;
@@ -57,7 +58,7 @@ public class ClientHandler extends Thread {
 	private void pair() {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
-				if(client != this && client.isPaired == false) {
+				if(client != this && client.isPaired == false && waiterPair == client.getWaiterPair()) {				
 					client.pair = this;
 					this.pair = client;
 					client.isPaired = true;
@@ -65,6 +66,12 @@ public class ClientHandler extends Thread {
 					myNumbers = new MyNumbers();
 					client.myNumbers = myNumbers;
 					waiterPair.notify();
+					/*
+					Server.waitersPair.remove(waiterPair);
+					waiterPair = new WaitMonitor(2);
+					client.waiterPair = waiterPair;
+					Server.waitersPair.add(waiterPair);
+					*/
 					break;
 				}
 			}
@@ -91,6 +98,13 @@ public class ClientHandler extends Thread {
 		} while (true);
 		username = input;
 		Server.onlineUsers.add(this);
+		for (WaitMonitor waiter : Server.waitersPair) {
+			if(waiter.getConnectionCounter() < 2) {
+				waiterPair = waiter;
+				waiterPair.addConnection();
+				break;
+			}
+		}
 		clientOutput.println("Dobrodosli " + username + "!");
 	}
 	private void sendMessages() throws IOException {
@@ -143,18 +157,18 @@ public class ClientHandler extends Thread {
 		mojBrojFinishedNumber = Integer.parseInt(message);
 		isMojBrojPlayed = true;
 		if(pair.isMojBrojPlayed) {
-			synchronized(waiterMojBroj) {
+			synchronized(waiterPair) {
 				pair.mojBrojFinishedNumberOfPair = mojBrojFinishedNumber;
 				pair.isMojBrojPlayedOfPair = isMojBrojPlayed;
 				mojBrojFinishedNumberOfPair = pair.mojBrojFinishedNumber;
 				isMojBrojPlayedOfPair = pair.isMojBrojPlayed;
-				waiterMojBroj.notify();
+				waiterPair.notify();
 			}
 		} else {
 			while(!isMojBrojPlayedOfPair) {
-				synchronized(waiterMojBroj) {
+				synchronized(waiterPair) {
 					try {
-						waiterMojBroj.wait();
+						waiterPair.wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -186,10 +200,18 @@ public class ClientHandler extends Thread {
 				break;
 			}
 			
+			
+			
+			if(Server.waitersPair.contains(waiterPair)) {
+				Server.waitersPair.remove(waiterPair);
+			}
 			Server.onlineUsers.remove(this);
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
 		} catch (IOException e) {
+			if(Server.waitersPair.contains(waiterPair)) {
+				Server.waitersPair.remove(waiterPair);
+			}
 			if(username != null) {
 				Server.onlineUsers.remove(this);
 			}

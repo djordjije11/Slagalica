@@ -50,7 +50,7 @@ public class Username extends JFrame implements ActionListener {
 	
 	public Username(WaitMonitor waiter){
 		this.waiter = waiter;
-		ImageIcon icon = new ImageIcon("D:\\MyDocs\\IntelliJ IDEA projects\\Test\\slagalica.jpg");
+		ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
 		this.setIconImage(icon.getImage());
         this.setTitle("Moj Broj");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);

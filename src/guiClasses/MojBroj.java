@@ -64,7 +64,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
     	this.myNumbers = myNumbers;
     	this.waiter = waiter;
         int i;
-        ImageIcon icon = new ImageIcon("D:\\MyDocs\\IntelliJ IDEA projects\\Test\\slagalica.jpg");
+        ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
         this.setIconImage(icon.getImage());
         this.setTitle("Moj Broj");
         this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
