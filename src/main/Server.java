@@ -8,7 +8,6 @@ import java.util.LinkedList;
 public class Server {
 	public static LinkedList<ClientHandler> onlineUsers = new LinkedList<>();
 	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<>();
-	public static LinkedList<WaitMonitor> waitersMojBroj = new LinkedList<>();
 	public static void main(String[] args) {
 		ServerSocket socket;
 		Socket socketCommunication;
