@@ -3,36 +3,36 @@ package mojbrojClasses;
 import java.util.Random;
 
 public class MyNumbers {
-	private long[] brojevi = new long[4];
-    private long[] srednjiNiz = {10, 15, 20};    //POSTAVLJANJE MOGUCIH OPCIJA ZA RANDOM VREDNOST ZA TO DUGME
-    private long[] veciNiz = {25, 50, 100};      //POSTAVLJANJE MOGUCIH OPCIJA ZA RANDOM VREDNOST ZA TO DUGME
-    private long srednjiBroj, veciBroj;
-    private long wantedNumber;
+	private int[] brojevi = new int[4];
+    private int[] srednjiNiz = {10, 15, 20};    //POSTAVLJANJE MOGUCIH OPCIJA ZA RANDOM VREDNOST ZA TO DUGME
+    private int[] veciNiz = {25, 50, 100};      //POSTAVLJANJE MOGUCIH OPCIJA ZA RANDOM VREDNOST ZA TO DUGME
+    private int srednjiBroj, veciBroj;
+    private int wantedNumber;
     private Random random;
     
-    public long[] getSrednjiNiz() {
+    public int[] getSrednjiNiz() {
     	return srednjiNiz;
     }
-    public long[] getVeciNiz() {
+    public int[] getVeciNiz() {
     	return veciNiz;
     }
-    public long getWantedNumber() {
+    public int getWantedNumber() {
     	return wantedNumber;
     }
-    public long getBrojeviLength() {
+    public int getBrojeviLength() {
     	return brojevi.length;
     }
-    public long getBroj(int i) {
+    public int getBroj(int i) {
     	return brojevi[i];
     }
-    public long getSrednjiBroj() {
+    public int getSrednjiBroj() {
     	return srednjiBroj;
     }
-    public long getVeciBroj() {
+    public int getVeciBroj() {
     	return veciBroj;
     }
     
-    public MyNumbers(long[] brojevi, long srednjiBroj, long veciBroj, long wantedNumber) {
+    public MyNumbers(int[] brojevi, int srednjiBroj, int veciBroj, int wantedNumber) {
     	this.brojevi = brojevi;
     	this.srednjiBroj = srednjiBroj;
     	this.veciBroj = veciBroj;

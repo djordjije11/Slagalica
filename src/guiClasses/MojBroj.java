@@ -26,11 +26,11 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
     private JLabel labelBroj;       //LABELA ZA BROJ KOJI TREBA DA DOBIJEMO, RANDOM IZGENERISAN
     private JLabel labelResult;		//LABELA ZA BROJ KOJI SMO DOBILI RACUNANJEM, I ZA SAM ISPIS RACUNA
     private JLabel message;
-    private long result;         //BROJ KOJI SMO DOBILI RACUNANJEM
+    private int result;         //BROJ KOJI SMO DOBILI RACUNANJEM
     private WaitMonitor waiter;
     private MyNumbers myNumbers;
     
-    private long finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
+    private int finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
 
     private JLabel vreme;
     private boolean isOver = false;
@@ -42,14 +42,14 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
         }
         return wholeString.length() - wholeString.replace(countPart, "").length();
     }
-    static boolean arrayContains(long[] array, long number){
+    static boolean arrayContains(int[] array, int number){
         for (int i = 0; i < array.length; i++){
             if(array[i] == number) return true;
         }
         return false;
     }
     
-    public long getFinishedNumber() {
+    public int getFinishedNumber() {
     	return finishedNumber;
     }
 
@@ -75,7 +75,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
         int k = 0;
         buttonBrojevi = new JButton[4];
         for(i = 0; i < buttonBrojevi.length; i++){
-            buttonBrojevi[i] = new JButton(Long.toString(myNumbers.getBroj(i)));
+            buttonBrojevi[i] = new JButton(Integer.toString(myNumbers.getBroj(i)));
             buttonBrojevi[i].setBounds(10 + k, 70, 50, 50);
             k += 50;
             buttonBrojevi[i].setFocusable(false);
@@ -83,12 +83,12 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
             this.add(buttonBrojevi[i]);
         }
         //INICIJALIZOVANJE PREOSTALA 2 DUGMETA ZA BROJEVE
-        buttonSrednji = new JButton(Long.toString(myNumbers.getSrednjiBroj()));
+        buttonSrednji = new JButton(Integer.toString(myNumbers.getSrednjiBroj()));
         buttonSrednji.setBounds(215, 70, 90, 50);
         buttonSrednji.setFocusable(false);
         buttonSrednji.addActionListener(this);
         this.add(buttonSrednji);
-        buttonVeci = new JButton(Long.toString(myNumbers.getVeciBroj()));
+        buttonVeci = new JButton(Integer.toString(myNumbers.getVeciBroj()));
         buttonVeci.setBounds(305, 70, 90, 50);
         buttonVeci.setFocusable(false);
         buttonVeci.addActionListener(this);
@@ -239,6 +239,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
                 return;
             }
         } catch(Exception z){
+        	finishedNumber = Integer.MAX_VALUE;
             labelResult.setText("GRESKA PRI FUNKCIJI EVAL");
             endButtons();
             return;
@@ -252,7 +253,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
                 String text = labelResult.getText();
                 char c = text.charAt(text.length()-1);
                 if(c == '+' || c == '-' || c == '*' || c == '/' || c == ' ' || c == '('){
-                    labelResult.setText(text + Long.toString(myNumbers.getBroj(i)));
+                    labelResult.setText(text + Integer.toString(myNumbers.getBroj(i)));
                     buttonBrojevi[i].setEnabled(false);
                 }
                 return;
@@ -262,7 +263,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
             String text = labelResult.getText();
             char c = text.charAt(text.length()-1);
             if(c == '+' || c == '-' || c == '*' || c == '/' || c == ' ' || c == '('){
-                labelResult.setText(text + Long.toString(myNumbers.getSrednjiBroj()));
+                labelResult.setText(text + Integer.toString(myNumbers.getSrednjiBroj()));
                 buttonSrednji.setEnabled(false);
             }
             return;
@@ -271,7 +272,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
             String text = labelResult.getText();
             char c = text.charAt(text.length()-1);
             if(c == '+' || c == '-' || c == '*' || c == '/' || c == ' ' || c == '('){
-                labelResult.setText(text + Long.toString(myNumbers.getVeciBroj()));
+                labelResult.setText(text + Integer.toString(myNumbers.getVeciBroj()));
                 buttonVeci.setEnabled(false);
             }
             return;
@@ -395,7 +396,6 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
                 }
             }
         }
-        //PODSETNIK - OBEZBEDITI DA NA KRAJU IGRE IGRAC NE MOZE DA KORISTI OPCIJE DELETE, kucanja znakova itd.
         if(e.getSource() == buttonFinish){
             end();
         }

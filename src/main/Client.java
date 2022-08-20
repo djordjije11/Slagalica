@@ -65,13 +65,13 @@ public class Client {
 	}	
 	private static MyNumbers getMyNumbersFromJSON(JSONObject object) {
 		JSONArray array = (JSONArray) object.get("brojevi");
-		long[] brojevi = new long[4];
+		int[] brojevi = new int[4];
 		for (int i = 0; i < 4; i++) {
-			brojevi[i] = (long) array.get(i);
+			brojevi[i] = (int) ((long)(array.get(i)));
 		}
-		long srednjiBroj = (long) object.get("srednjiBroj");
-		long veciBroj = (long) object.get("veciBroj");
-		long wantedNumber = (long) object.get("wantedNumber");
+		int srednjiBroj = (int) ((long)object.get("srednjiBroj"));
+		int veciBroj = (int) ((long)object.get("veciBroj"));
+		int wantedNumber = (int) ((long)object.get("wantedNumber"));
 		return new MyNumbers(brojevi, srednjiBroj, veciBroj, wantedNumber);
 	}
 	
@@ -111,7 +111,7 @@ public class Client {
 				e.printStackTrace();
 			}
 		}
-		serverOutput.println(Long.toString(mojbrojGUI.getFinishedNumber()));
+		serverOutput.println(Integer.toString(mojbrojGUI.getFinishedNumber()));
 		do {
 			input = serverInput.readLine();
 		} while (input == null);
