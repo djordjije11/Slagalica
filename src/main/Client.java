@@ -119,8 +119,11 @@ public class Client {
 	}
 	
 	public static void main(String[] args) {
+		//String ip = "192.168.0.16";
+		String ip = "localhost";
+		int port = 9001;
 		try {
-			socketCommunication = new Socket("localhost", 9001);
+			socketCommunication = new Socket(ip, port);
 			serverInput = new BufferedReader(new InputStreamReader(socketCommunication.getInputStream()));
 			serverOutput = new PrintStream(socketCommunication.getOutputStream());
 			//console = new BufferedReader(new InputStreamReader(System.in));

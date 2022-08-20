@@ -17,7 +17,6 @@ public class Server {
 			WaitMonitor waiterPair = new WaitMonitor();
 			WaitMonitor waiterMojBroj = new WaitMonitor();
 			while(true) {
-				//System.out.println("Cekam na konekciju...");
 				socketCommunication = socket.accept();
 				System.out.println("Konekcija je uspostavljena!");
 				ClientHandler client = new ClientHandler(socketCommunication, waiterPair, waiterMojBroj);
