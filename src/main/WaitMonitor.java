@@ -6,15 +6,12 @@ public class WaitMonitor {
 	public void addConnection() {
 		connectionCounter++;
 	}
-	
 	public int getConnectionCounter() {
 		return connectionCounter;
 	}
-	
 	public WaitMonitor() {
 		
 	}
-	
 	public WaitMonitor(int connectionCounter) {
 		this.connectionCounter = connectionCounter;
 	}

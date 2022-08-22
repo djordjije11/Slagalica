@@ -100,7 +100,5 @@ public class Username extends JFrame implements ActionListener {
 				}
 			}
 		}
-		
 	}
-	
 }

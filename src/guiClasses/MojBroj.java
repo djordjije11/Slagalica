@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
+public class MojBroj extends JFrame implements ActionListener {
     private JButton buttonSrednji;
     private JButton buttonVeci;
     private JButton[] buttonBrojevi;
@@ -25,10 +25,11 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
     private JButton buttonFinish;
     private JLabel labelBroj;       //LABELA ZA BROJ KOJI TREBA DA DOBIJEMO, RANDOM IZGENERISAN
     private JLabel labelResult;		//LABELA ZA BROJ KOJI SMO DOBILI RACUNANJEM, I ZA SAM ISPIS RACUNA
-    private JLabel message;
+    private JLabel messageLabel;
     private int result;         //BROJ KOJI SMO DOBILI RACUNANJEM
     private WaitMonitor waiter;
     private MyNumbers myNumbers;
+    private JLabel usernameLabel;
     
     private int finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
 
@@ -53,14 +54,14 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
     	return finishedNumber;
     }
 
-    public void setMessage(String text) {
-    	message.setText(text);
+    public void setMessageLabel(String text) {
+    	messageLabel.setText(text);
     	//Thread.sleep(1500);
     	//this.dispose();
     	this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
-    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter){
+    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username){
     	this.myNumbers = myNumbers;
     	this.waiter = waiter;
         int i;
@@ -156,10 +157,14 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
         vreme.setBounds(10, 20, 40, 40);
         this.add(vreme);
         
-        message = new JLabel();
-        message.setBounds(100, 300, 300, 50);
-        this.add(message);
+        messageLabel = new JLabel();
+        messageLabel.setBounds(100, 300, 300, 50);
+        this.add(messageLabel);
         
+        usernameLabel = new JLabel(username);
+    	usernameLabel.setBounds(320, 10, 100, 40);
+    	this.add(usernameLabel);
+    	
         /*
         try {
 			Thread.sleep(200);
@@ -207,7 +212,7 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
         buttonOtvorenaZagrada.setEnabled(false);
         buttonZatvorenaZagrada.setEnabled(false);
         isOver = true;
-        message.setText("Ceka se protivnik...");
+        messageLabel.setText("Ceka se protivnik...");
         synchronized(waiter) {
         	waiter.notify();
         }
@@ -400,36 +405,4 @@ public class MojBroj extends JFrame implements ActionListener/*, Runnable*/ {
             end();
         }
     }
-    
-    /*
-	@Override
-	public void run() {
-		try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		this.setVisible(true);
-
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask(){
-            int m = 60;
-            @Override
-            public void run(){
-                if(isOver){
-                    return;
-                }
-                if(m > 0) {
-                    m--;
-                    vreme.setText(Integer.toString(m));
-                }else{
-                    end();
-                }
-            }
-        };
-        //timer.schedule(task, 10000);
-        timer.scheduleAtFixedRate(task, 0, 1000);
-	}
-	*/
 }

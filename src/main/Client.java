@@ -32,12 +32,13 @@ public class Client {
 	static WaitMonitor waiter;
 	
 	private static String username;
+	private static File fileMojBroj;
 	
 	private static String createFile(String input, String name) {
 		FileWriter fw;
-		File file = new File(name);
+		fileMojBroj = new File(name);
 		try {
-			fw = new FileWriter(file);
+			fw = new FileWriter(fileMojBroj);
 			fw.write(input);
 			fw.flush();
 			fw.close();
@@ -45,7 +46,7 @@ public class Client {
 			Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
 			return null;
 		}
-		return file.getAbsolutePath();
+		return fileMojBroj.getAbsolutePath();
 	}
 	private static MyNumbers readMyNumbersJson(String path) {
 		JSONParser parser = new JSONParser();
@@ -54,6 +55,7 @@ public class Client {
 			FileReader fr = new FileReader(path);
 			object = (JSONObject) parser.parse(fr);
 			fr.close();
+			fileMojBroj.delete();
 		} catch (FileNotFoundException ex) {
 			 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
 		 } catch (IOException ex) {
@@ -74,7 +76,6 @@ public class Client {
 		int wantedNumber = (int) ((long)object.get("wantedNumber"));
 		return new MyNumbers(brojevi, srednjiBroj, veciBroj, wantedNumber);
 	}
-	
 	private static void setUsername() throws IOException {
 		String input;
 		usernameGUI = new Username(waiter);
@@ -94,6 +95,7 @@ public class Client {
 				continue;
 			} else break;
 		}
+		username = usernameGUI.getUsername();
 		input = serverInput.readLine();
 		usernameGUI.setPair(input);
 	}
@@ -102,7 +104,7 @@ public class Client {
 		input = serverInput.readLine();
 		String absloutePath = createFile(input, username + "_myNumbersJSON.json");
 		myNumbers = readMyNumbersJson(absloutePath);
-		mojbrojGUI = new MojBroj(myNumbers, waiter);
+		mojbrojGUI = new MojBroj(myNumbers, waiter, username);
 		//new Thread(mojbrojGUI).start();
 		synchronized(waiter) {
 			try {
@@ -115,7 +117,7 @@ public class Client {
 		do {
 			input = serverInput.readLine();
 		} while (input == null);
-		mojbrojGUI.setMessage(input);
+		mojbrojGUI.setMessageLabel(input);
 	}
 	
 	public static void main(String[] args) {
@@ -135,7 +137,6 @@ public class Client {
 			socketCommunication.close();
 			return;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
