@@ -10,7 +10,7 @@ import java.awt.event.ActionListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MojBroj extends JFrame implements ActionListener {
+public class MojBroj extends Gui implements ActionListener {
     private JButton buttonSrednji;
     private JButton buttonVeci;
     private JButton[] buttonBrojevi;
@@ -27,14 +27,14 @@ public class MojBroj extends JFrame implements ActionListener {
     private JLabel labelResult;		//LABELA ZA BROJ KOJI SMO DOBILI RACUNANJEM, I ZA SAM ISPIS RACUNA
     private JLabel messageLabel;
     private int result;         //BROJ KOJI SMO DOBILI RACUNANJEM
-    private WaitMonitor waiter;
-    private MyNumbers myNumbers;
-    private JLabel usernameLabel;
     
+    private MyNumbers myNumbers;
     private int finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
 
     private JLabel vreme;
     private boolean isOver = false;
+    
+    private TimerTask task;
 
     static int countStringInString(String wholeString, String countPart){
         if(wholeString == null || countPart == null){
@@ -53,31 +53,33 @@ public class MojBroj extends JFrame implements ActionListener {
     public int getFinishedNumber() {
     	return finishedNumber;
     }
-
     public void setMessageLabel(String text) {
+    	if(text.equals("Pobedili ste!")) {
+    		addScores(20, 0);
+    	} else if(text.equals("Izgubili ste!")) {
+    		addScores(0, 20);
+    	} else addScores(10, 10);
     	messageLabel.setText(text);
-    	//Thread.sleep(1500);
-    	//this.dispose();
-    	this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+    	try {
+			Thread.sleep(1500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	this.dispose();
+    	//this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
-    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username){
+    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair){
+    	super(waiter, username, usernameOfPair, score, scoreOfPair);
     	this.myNumbers = myNumbers;
-    	this.waiter = waiter;
-        int i;
-        ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
-        this.setIconImage(icon.getImage());
         this.setTitle("Moj Broj");
-        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        this.setSize(420, 400);
-        this.setResizable(false);
-        this.setLayout(null);
+        
         //INICIJALIZOVANJE PRVA 4 DUGMETA ZA BROJEVE
         int k = 0;
         buttonBrojevi = new JButton[4];
-        for(i = 0; i < buttonBrojevi.length; i++){
+        for(int i = 0; i < buttonBrojevi.length; i++){
             buttonBrojevi[i] = new JButton(Integer.toString(myNumbers.getBroj(i)));
-            buttonBrojevi[i].setBounds(10 + k, 70, 50, 50);
+            buttonBrojevi[i].setBounds(10 + k, 120, 50, 50);
             k += 50;
             buttonBrojevi[i].setFocusable(false);
             buttonBrojevi[i].addActionListener(this);
@@ -85,72 +87,73 @@ public class MojBroj extends JFrame implements ActionListener {
         }
         //INICIJALIZOVANJE PREOSTALA 2 DUGMETA ZA BROJEVE
         buttonSrednji = new JButton(Integer.toString(myNumbers.getSrednjiBroj()));
-        buttonSrednji.setBounds(215, 70, 90, 50);
+        buttonSrednji.setBounds(215, 120, 90, 50);
         buttonSrednji.setFocusable(false);
         buttonSrednji.addActionListener(this);
         this.add(buttonSrednji);
         buttonVeci = new JButton(Integer.toString(myNumbers.getVeciBroj()));
-        buttonVeci.setBounds(305, 70, 90, 50);
+        buttonVeci.setBounds(305, 120, 90, 50);
         buttonVeci.setFocusable(false);
         buttonVeci.addActionListener(this);
         this.add(buttonVeci);
         //INICIJALIZOVANJE DUGMICA ZA OPERATORE I ZAGRADE
         buttonPlus = new JButton("+");
-        buttonPlus.setBounds(15, 145, 60, 25);
+        buttonPlus.setBounds(15, 195, 60, 25);
         buttonPlus.setFocusable(false);
         buttonPlus.addActionListener(this);
         this.add(buttonPlus);
         buttonMinus = new JButton("-");
-        buttonMinus.setBounds(75, 145, 60, 25);
+        buttonMinus.setBounds(75, 195, 60, 25);
         buttonMinus.setFocusable(false);
         buttonMinus.addActionListener(this);
         this.add(buttonMinus);
         buttonPuta = new JButton("*");
-        buttonPuta.setBounds(15, 170, 60, 25);
+        buttonPuta.setBounds(15, 220, 60, 25);
         buttonPuta.setFocusable(false);
         buttonPuta.addActionListener(this);
         this.add(buttonPuta);
         buttonDeljenje = new JButton("/");
-        buttonDeljenje.setBounds(75, 170, 60, 25);
+        buttonDeljenje.setBounds(75, 220, 60, 25);
         buttonDeljenje.setFocusable(false);
         buttonDeljenje.addActionListener(this);
         this.add(buttonDeljenje);
         buttonOtvorenaZagrada = new JButton("(");
-        buttonOtvorenaZagrada.setBounds(135, 145, 70,25);
+        buttonOtvorenaZagrada.setBounds(135, 195, 70, 25);
         buttonOtvorenaZagrada.setFocusable(false);
         buttonOtvorenaZagrada.addActionListener(this);
         this.add(buttonOtvorenaZagrada);
         buttonZatvorenaZagrada = new JButton(")");
-        buttonZatvorenaZagrada.setBounds(135, 170, 70,25);
+        buttonZatvorenaZagrada.setBounds(135, 220, 70, 25);
         buttonZatvorenaZagrada.setFocusable(false);
         buttonZatvorenaZagrada.addActionListener(this);
         this.add(buttonZatvorenaZagrada);
         //INICIJALIZOVANJE DUGMETA ZA RESETOVANJE DOSAD URADJENOG RACUNA
         buttonReset = new JButton("RESET");
-        buttonReset.setBounds(305, 145, 85, 25);
+        buttonReset.setBounds(305, 195, 85, 25);
         buttonReset.setFocusable(false);
         buttonReset.addActionListener(this);
         this.add(buttonReset);
         //INICIJALIZOVANJE DUGMETA ZA BRISANJE UKUCANOG
         buttonDelete = new JButton("DELETE");
-        buttonDelete.setBounds(220, 145, 85, 25);
+        buttonDelete.setBounds(220, 195, 85, 25);
         buttonDelete.setFocusable(false);
         buttonDelete.addActionListener(this);
         this.add(buttonDelete);
         //INICIJALIZOVANJE DUGMETA ZA PROVERU RACUNA
         buttonFinish = new JButton("FINISH");
-        buttonFinish.setBounds(220, 170, 170, 25);
+        buttonFinish.setBounds(220, 220, 170, 25);
         buttonFinish.setFocusable(false);
         buttonFinish.addActionListener(this);
         this.add(buttonFinish);
         //INICIJALIZOVANJE LABELE ZA ISPIS RACUNA
         labelResult = new JLabel("RACUN: ");
-        labelResult.setBounds(10, 200, 400, 50);
+        labelResult.setBounds(10, 250, 400, 50);
         this.add(labelResult);
         //INICIJALIZOVANJE LABELE ZA TRAZENI BROJ
         labelBroj = new JLabel("Trazeni broj: " + myNumbers.getWantedNumber());
-        labelBroj.setBounds(136, 20, 100, 40);
+        labelBroj.setBounds(136, 70, 100, 40);
         this.add(labelBroj);
+        
 
         //VREME
         vreme = new JLabel("60");
@@ -160,23 +163,11 @@ public class MojBroj extends JFrame implements ActionListener {
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
-        
-        usernameLabel = new JLabel(username);
-    	usernameLabel.setBounds(320, 10, 100, 40);
-    	this.add(usernameLabel);
     	
-        /*
-        try {
-			Thread.sleep(200);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
 		this.setVisible(true);
 
         Timer timer = new Timer();
-        TimerTask task = new TimerTask(){
+        task = new TimerTask(){
             int m = 60;
             @Override
             public void run(){
@@ -193,7 +184,6 @@ public class MojBroj extends JFrame implements ActionListener {
         };
         //timer.schedule(task, 10000);
         timer.scheduleAtFixedRate(task, 0, 1000);
-
     }
 
     private void endButtons() {
@@ -212,6 +202,7 @@ public class MojBroj extends JFrame implements ActionListener {
         buttonOtvorenaZagrada.setEnabled(false);
         buttonZatvorenaZagrada.setEnabled(false);
         isOver = true;
+        task.cancel();
         messageLabel.setText("Ceka se protivnik...");
         synchronized(waiter) {
         	waiter.notify();

@@ -52,7 +52,7 @@ public class Username extends JFrame implements ActionListener {
 		this.waiter = waiter;
 		ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
 		this.setIconImage(icon.getImage());
-        this.setTitle("Moj Broj");
+        this.setTitle("Slagalica");
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(420, 400);
         this.setResizable(false);

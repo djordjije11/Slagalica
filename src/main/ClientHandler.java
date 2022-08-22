@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Random;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import mojbrojClasses.MyNumbers;
+import quizClasses.Questions;
 
 public class ClientHandler extends Thread {
 	private BufferedReader clientInput = null;
@@ -23,13 +26,27 @@ public class ClientHandler extends Thread {
 	private WaitMonitor waiterPair;
 	
 	public MyNumbers myNumbers;
+	public Questions[] nizPitanja;
 	
 	public boolean isMojBrojPlayed = false;
 	public boolean isMojBrojPlayedOfPair = false;
 	public int mojBrojFinishedNumber;
 	public int mojBrojFinishedNumberOfPair;
 	
+	public boolean isQuestionAnswered = false;
+	public boolean isQuestionAnsweredOfPair = false;
+	public String isCorrectAnswer;
+	public String isCorrectAnswerOfPair;
 	
+	private Questions[] getRandomQuestions() {
+		Questions[] pitanja = new Questions[4];
+		LinkedList<Questions> questions = Server.questionsList;
+		for (int i = 0; i < pitanja.length; i++) {
+			pitanja[i] = questions.get(new Random().nextInt(questions.size()));
+			questions.remove(pitanja[i]);
+		}
+		return pitanja;
+	}
 	public WaitMonitor getWaiterPair() {
 		return waiterPair;
 	}
@@ -52,28 +69,34 @@ public class ClientHandler extends Thread {
 	ClientHandler(String username){
 		this.username = username;
 	}
+	private void createNewWaiterPair() {
+		Server.waitersPair.remove(waiterPair);
+		waiterPair = new WaitMonitor(2);
+		pair.waiterPair = waiterPair;
+		Server.waitersPair.add(waiterPair);
+	}
 	private void pair() {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
 				if(client != this && client.isPaired == false && waiterPair == client.getWaiterPair()) {				
 					client.pair = this;
 					this.pair = client;
-					client.isPaired = true;
+					pair.isPaired = true;
 					this.isPaired = true;
 					myNumbers = new MyNumbers();
-					client.myNumbers = myNumbers;
+					pair.myNumbers = this.myNumbers;
+					nizPitanja = getRandomQuestions();
+					pair.nizPitanja = this.nizPitanja;
 					waiterPair.notify();
 					/*
-					Server.waitersPair.remove(waiterPair);
-					waiterPair = new WaitMonitor(2);
-					client.waiterPair = waiterPair;
-					Server.waitersPair.add(waiterPair);
-					*/
+					 *
+					 */
 					break;
 				}
 			}
 		}
-		while(!isPaired) {
+		// AKO NECE STAVI WHILE UMESTO IF
+		if(!isPaired) {
 			synchronized(waiterPair) {
 				try {
 					waiterPair.wait();
@@ -81,6 +104,7 @@ public class ClientHandler extends Thread {
 					e.printStackTrace();
 				}
 			}
+			//createNewWaiterPair();
 		}
 		clientOutput.println(">>> Tvoj par je " + pair.username);
 	}
@@ -171,6 +195,7 @@ public class ClientHandler extends Thread {
 					}
 				}
 			}
+			//createNewWaiterPair();
 		}
 		if(mojBrojFinishedNumber < mojBrojFinishedNumberOfPair) {
 			clientOutput.println("Pobedili ste!");
@@ -180,6 +205,73 @@ public class ClientHandler extends Thread {
 			clientOutput.println("Nereseno!");
 		}
 	}
+	private void startQuiz() throws IOException {
+		writePitanja(nizPitanja);
+		String input;
+		int i = 0;
+		do {
+			input = clientInput.readLine();
+			isCorrectAnswer = input;
+			isQuestionAnswered = true;
+			if(pair.isQuestionAnswered) {
+				synchronized(waiterPair) {
+					pair.isCorrectAnswerOfPair = this.isCorrectAnswer;
+					pair.isQuestionAnsweredOfPair = true;
+					this.isCorrectAnswerOfPair = pair.isCorrectAnswer;
+					waiterPair.notify();
+				}
+			} else {
+				while(!isQuestionAnsweredOfPair) {
+					synchronized(waiterPair) {
+						try {
+							waiterPair.wait();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			String key = isCorrectAnswer + "-" + isCorrectAnswerOfPair;
+			clientOutput.println(key);
+			isQuestionAnswered = false; isCorrectAnswer = null; isQuestionAnsweredOfPair = false; isCorrectAnswerOfPair = null;
+			i++;
+		} while(i < 4);
+	}
+	private void writePitanja(Questions[] nizPitanja) {
+		JSONObject quiz = new JSONObject();
+		JSONArray questions = new JSONArray();
+		JSONObject question1 = new JSONObject();
+		JSONObject question2 = new JSONObject();
+		JSONObject question3 = new JSONObject();
+		JSONObject question4 = new JSONObject();
+		JSONArray answers1 = initializeAnswersJSON(nizPitanja[0]);
+		JSONArray answers2 = initializeAnswersJSON(nizPitanja[1]);
+		JSONArray answers3 = initializeAnswersJSON(nizPitanja[2]);
+		JSONArray answers4 = initializeAnswersJSON(nizPitanja[3]);
+		question1.put("answers", answers1);
+		question2.put("answers", answers2);
+		question3.put("answers", answers3);
+		question4.put("answers", answers4);
+		question1.put("question", nizPitanja[0].getQuestion());
+		question2.put("question", nizPitanja[1].getQuestion());
+		question3.put("question", nizPitanja[2].getQuestion());
+		question4.put("question", nizPitanja[3].getQuestion());
+		question1.put("correctAnswer", nizPitanja[0].getCorrectAnswer());
+		question2.put("correctAnswer", nizPitanja[1].getCorrectAnswer());
+		question3.put("correctAnswer", nizPitanja[2].getCorrectAnswer());
+		question4.put("correctAnswer", nizPitanja[3].getCorrectAnswer());
+		questions.add(question1); questions.add(question2); questions.add(question3); questions.add(question4);
+		quiz.put("questions", questions);
+		clientOutput.println(quiz.toJSONString());
+	}
+	private JSONArray initializeAnswersJSON(Questions pitanje) {
+		JSONArray answers = new JSONArray();
+		for (int i = 0; i < 4; i++) {
+			answers.add(pitanje.getAnswer(i));
+		}
+		return answers;
+	}
+
 	
 	@Override
 	public void run() {
@@ -193,6 +285,7 @@ public class ClientHandler extends Thread {
 					pair();
 				}
 				startMojBroj();
+				startQuiz();
 				isQuit = true;
 				break;
 			}

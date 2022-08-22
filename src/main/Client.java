@@ -19,6 +19,7 @@ import org.json.simple.parser.ParseException;
 
 import guiClasses.*;
 import mojbrojClasses.MyNumbers;
+import quizClasses.Questions;
 
 public class Client {
 	private static Socket socketCommunication;
@@ -27,44 +28,16 @@ public class Client {
 	//private static BufferedReader console;
 	
 	private static Username usernameGUI;
-	private static MyNumbers myNumbers;
 	private static MojBroj mojbrojGUI;
+	private static Quiz quizGUI;
 	static WaitMonitor waiter;
 	
 	private static String username;
-	private static File fileMojBroj;
+	private static String usernameOfPair;
+	private static int scores = 0;
+	private static int scoresOfPair = 0;
 	
-	private static String createFile(String input, String name) {
-		FileWriter fw;
-		fileMojBroj = new File(name);
-		try {
-			fw = new FileWriter(fileMojBroj);
-			fw.write(input);
-			fw.flush();
-			fw.close();
-		} catch(IOException ex) {
-			Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
-			return null;
-		}
-		return fileMojBroj.getAbsolutePath();
-	}
-	private static MyNumbers readMyNumbersJson(String path) {
-		JSONParser parser = new JSONParser();
-		JSONObject object = null;
-		try {
-			FileReader fr = new FileReader(path);
-			object = (JSONObject) parser.parse(fr);
-			fr.close();
-			fileMojBroj.delete();
-		} catch (FileNotFoundException ex) {
-			 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-		 } catch (IOException ex) {
-		 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-		 } catch (ParseException ex) {
-		 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-		 }
-		return getMyNumbersFromJSON(object);
-	}	
+	
 	private static MyNumbers getMyNumbersFromJSON(JSONObject object) {
 		JSONArray array = (JSONArray) object.get("brojevi");
 		int[] brojevi = new int[4];
@@ -75,6 +48,22 @@ public class Client {
 		int veciBroj = (int) ((long)object.get("veciBroj"));
 		int wantedNumber = (int) ((long)object.get("wantedNumber"));
 		return new MyNumbers(brojevi, srednjiBroj, veciBroj, wantedNumber);
+	}
+	private static Questions[] getQuestionsFromJSON(JSONObject object) {
+		JSONArray questions = (JSONArray) object.get("questions");
+		Questions[] pitanjaNiz = new Questions[4];
+		for(int i = 0; i < 4; i++) {
+			JSONObject question = (JSONObject) questions.get(i);
+			String pitanje = (String) question.get("question");
+			String tacanOdgovor = (String) question.get("correctAnswer");
+			JSONArray answers = (JSONArray) question.get("answers");
+			String[] odgovori = new String[4];
+			for(int j = 0; j < 4; j++) {
+				odgovori[j] = (String) answers.get(j);
+			}
+			pitanjaNiz[i] = new Questions(odgovori, pitanje, tacanOdgovor);
+		}
+		return pitanjaNiz;
 	}
 	private static void setUsername() throws IOException {
 		String input;
@@ -98,13 +87,18 @@ public class Client {
 		username = usernameGUI.getUsername();
 		input = serverInput.readLine();
 		usernameGUI.setPair(input);
+		//input je ">>> Tvoj par je " + pair.username
+		usernameOfPair = input.substring(16);
 	}
 	private static void startMojBroj() throws IOException {
-		String input;
-		input = serverInput.readLine();
-		String absloutePath = createFile(input, username + "_myNumbersJSON.json");
-		myNumbers = readMyNumbersJson(absloutePath);
-		mojbrojGUI = new MojBroj(myNumbers, waiter, username);
+		String input = serverInput.readLine();
+		JSONObject object = parseJSON(input);
+		if(object == null) {
+			System.out.println("GRESKA");
+			return;
+		}
+		MyNumbers myNumbers = getMyNumbersFromJSON(object);
+		mojbrojGUI = new MojBroj(myNumbers, waiter, username, usernameOfPair, scores, scoresOfPair);
 		//new Thread(mojbrojGUI).start();
 		synchronized(waiter) {
 			try {
@@ -118,6 +112,46 @@ public class Client {
 			input = serverInput.readLine();
 		} while (input == null);
 		mojbrojGUI.setMessageLabel(input);
+		scores = mojbrojGUI.getScores();
+		scoresOfPair = mojbrojGUI.getScoresOfPair();
+	}
+	
+	private static void startQuiz() throws IOException {
+		String input = serverInput.readLine();
+		JSONObject object = parseJSON(input);
+		if(object == null) {
+			System.out.println("GRESKA");
+			return;
+		}
+		Questions[] pitanjaNiz = getQuestionsFromJSON(object);
+		quizGUI = new Quiz(pitanjaNiz, waiter, username, usernameOfPair, scores, scoresOfPair);
+		int i = 0;
+		do {
+			synchronized(waiter) {
+				try {
+					waiter.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			serverOutput.println(quizGUI.getIsCorrect());
+			input = serverInput.readLine();
+			quizGUI.setMessage(input);
+			i++;
+		} while (i < 4);
+		scores = quizGUI.getScores();
+		scoresOfPair = quizGUI.getScoresOfPair();
+	}
+	
+	private static JSONObject parseJSON(String input) {
+		JSONParser parser = new JSONParser();
+		JSONObject object = null;
+		try {
+			object = (JSONObject) parser.parse(input);
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}
+		return object;
 	}
 	
 	public static void main(String[] args) {
@@ -134,6 +168,7 @@ public class Client {
 			
 			setUsername();
 			startMojBroj();
+			startQuiz();
 			socketCommunication.close();
 			return;
 		} catch (IOException e) {
