@@ -40,7 +40,7 @@ public class ClientHandler extends Thread {
 	
 	private Questions[] getRandomQuestions() {
 		Questions[] pitanja = new Questions[4];
-		LinkedList<Questions> questions = Server.questionsList;
+		LinkedList<Questions> questions = (LinkedList<Questions>) Server.questionsList.clone();
 		for (int i = 0; i < pitanja.length; i++) {
 			pitanja[i] = questions.get(new Random().nextInt(questions.size()));
 			questions.remove(pitanja[i]);

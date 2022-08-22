@@ -155,8 +155,8 @@ public class Client {
 	}
 	
 	public static void main(String[] args) {
-		//String ip = "192.168.0.18";
-		String ip = "localhost";
+		String ip = "192.168.0.18";
+		//String ip = "localhost";
 		int port = 9001;
 		try {
 			socketCommunication = new Socket(ip, port);

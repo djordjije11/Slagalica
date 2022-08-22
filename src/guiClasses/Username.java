@@ -73,6 +73,7 @@ public class Username extends JFrame implements ActionListener {
         
         sendButton = new JButton("SEND");
         sendButton.setBounds(170, 188, 80, 40);
+        sendButton.setFocusable(false);
         sendButton.addActionListener(this);
         
         this.add(label1);
