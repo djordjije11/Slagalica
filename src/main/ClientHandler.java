@@ -24,6 +24,7 @@ public class ClientHandler extends Thread {
 	public boolean isPaired = false;
 	private boolean isQuit = false;
 	private WaitMonitor waiterPair;
+	private String code;
 	
 	public MyNumbers myNumbers;
 	public Questions[] nizPitanja;
@@ -38,6 +39,9 @@ public class ClientHandler extends Thread {
 	public String isCorrectAnswer;
 	public String isCorrectAnswerOfPair;
 	
+	public String getCode() { 
+		return code;
+	}
 	private Questions[] getRandomQuestions() {
 		Questions[] pitanja = new Questions[4];
 		LinkedList<Questions> questions = (LinkedList<Questions>) Server.questionsList.clone();
@@ -75,7 +79,7 @@ public class ClientHandler extends Thread {
 		pair.waiterPair = waiterPair;
 		Server.waitersPair.add(waiterPair);
 	}
-	private void pair() {
+	private void pairRandom() {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
 				if(client != this && client.isPaired == false && waiterPair == client.getWaiterPair()) {				
@@ -106,7 +110,7 @@ public class ClientHandler extends Thread {
 			}
 			//createNewWaiterPair();
 		}
-		clientOutput.println(">>> Tvoj par je " + pair.username);
+		clientOutput.println(pair.getUsername());
 	}
 	private void setUsername() throws IOException {
 		String input;
@@ -119,13 +123,6 @@ public class ClientHandler extends Thread {
 		} while (true);
 		username = input;
 		Server.onlineUsers.add(this);
-		for (WaitMonitor waiter : Server.waitersPair) {
-			if(waiter.getConnectionCounter() < 2) {
-				waiterPair = waiter;
-				waiterPair.addConnection();
-				break;
-			}
-		}
 		clientOutput.println("Dobrodosli " + username + "!");
 	}
 	private void sendMessages() throws IOException {
@@ -272,6 +269,92 @@ public class ClientHandler extends Thread {
 		return answers;
 	}
 
+	private void pairByCode() throws IOException, InterruptedException {	
+		for (ClientHandler client : Server.onlineUsers) {
+			if(client != this && client.isPaired == false && code.equals(client.getCode())) {
+				this.waiterPair = client.getWaiterPair();
+				waiterPair.addConnection();
+				synchronized(waiterPair) {
+					client.pair = this;
+					this.pair = client;
+					pair.isPaired = true;
+					this.isPaired = true;
+					myNumbers = new MyNumbers();
+					pair.myNumbers = this.myNumbers;
+					nizPitanja = getRandomQuestions();
+					pair.nizPitanja = this.nizPitanja;
+					waiterPair.notify();
+					break;
+				}
+			}
+		}
+		clientOutput.println(pair.getUsername());
+	}
+	
+	private void pairing() throws IOException, InterruptedException {
+		String key = clientInput.readLine();
+		switch (key) {
+		case "R": {
+			for (WaitMonitor waiter : Server.waitersPair) {
+				if(waiter.getConnectionCounter() < 2) {
+					waiterPair = waiter;
+					waiterPair.addConnection();
+					break;
+				}
+			}
+			pairRandom();
+			break;
+		}
+		case "G": {
+			synchronized(Server.codesList) {
+				code = Server.generateCode();
+				Server.codesList.add(code);
+			}
+			clientOutput.println(code);
+			waiterPair = new WaitMonitor(1);
+			Server.waitersPair.add(waiterPair);
+			while(!isPaired) {
+				synchronized(waiterPair) {
+					waiterPair.wait();
+				}
+			}
+			clientOutput.println(pair.username);
+			break;
+		}
+		case "P": {
+			while(true) {
+				String input = clientInput.readLine();
+				synchronized(Server.codesList) {
+					if(!Server.codesList.contains(input)) {
+						clientOutput.println("Uneli ste nepostojeci kod.");
+						continue;
+					} else {
+						code = input;
+						Server.codesList.remove(code);
+						break;
+					}
+				}
+			}
+			pairByCode();
+			break;
+		}
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + key);
+		}
+	}
+	
+	private void finish() {
+		if(Server.codesList.contains(code)) {
+			Server.codesList.remove(code);
+		}
+		if(Server.waitersPair.contains(waiterPair)) {
+			Server.waitersPair.remove(waiterPair);
+		}
+		if(username != null) {
+			Server.onlineUsers.remove(this);
+		}
+	}
+	
 	
 	@Override
 	public void run() {
@@ -282,7 +365,7 @@ public class ClientHandler extends Thread {
 			setUsername();
 			while(!isQuit) {
 				if(!isPaired) {
-					pair();
+					pairing();
 				}
 				startMojBroj();
 				startQuiz();
@@ -290,20 +373,15 @@ public class ClientHandler extends Thread {
 				break;
 			}
 			
-			if(Server.waitersPair.contains(waiterPair)) {
-				Server.waitersPair.remove(waiterPair);
-			}
-			Server.onlineUsers.remove(this);
+			finish();
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
 		} catch (IOException e) {
-			if(Server.waitersPair.contains(waiterPair)) {
-				Server.waitersPair.remove(waiterPair);
-			}
-			if(username != null) {
-				Server.onlineUsers.remove(this);
-			}
+			finish();
 			System.out.println("Konekcija zatvorena.");
+		} catch (InterruptedException e) {
+			finish();
+			e.printStackTrace();
 		}
 	}
 }

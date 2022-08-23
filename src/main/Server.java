@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
+import java.util.Random;
 
 import quizClasses.Questions;
 
 public class Server {
-	public static LinkedList<ClientHandler> onlineUsers = new LinkedList<>();
-	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<>();
+	public static LinkedList<ClientHandler> onlineUsers = new LinkedList<ClientHandler>();
+	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<WaitMonitor>();
 	public static LinkedList<Questions> questionsList = new LinkedList<Questions>();
+	public static LinkedList<String> codesList = new LinkedList<String>();
 	
 	private static void generateQuestionsList() {
 		Questions pitanje1 = new Questions(new String[]{"Scarface", "Dog Day Afternoon", "Mystic River", "Donnie Brasco"}, 
@@ -36,6 +38,14 @@ public class Server {
 		questionsList.add(pitanje1); questionsList.add(pitanje2); questionsList.add(pitanje3); questionsList.add(pitanje4);
 		questionsList.add(pitanje5); questionsList.add(pitanje6); questionsList.add(pitanje7); questionsList.add(pitanje8);
 		questionsList.add(pitanje9); questionsList.add(pitanje10);
+	}
+	public static String generateCode() {
+		String code;
+		while(true) {
+			code = Integer.toString((new Random()).nextInt(90000000) + 10000000);
+			if(!codesList.contains(code)) break;
+		}
+		return code;
 	}
 	
 	public static void main(String[] args) {

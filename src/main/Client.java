@@ -28,6 +28,7 @@ public class Client {
 	//private static BufferedReader console;
 	
 	private static Username usernameGUI;
+	private static Pairing pairingGUI;
 	private static MojBroj mojbrojGUI;
 	private static Quiz quizGUI;
 	static WaitMonitor waiter;
@@ -36,7 +37,6 @@ public class Client {
 	private static String usernameOfPair;
 	private static int scores = 0;
 	private static int scoresOfPair = 0;
-	
 	
 	private static MyNumbers getMyNumbersFromJSON(JSONObject object) {
 		JSONArray array = (JSONArray) object.get("brojevi");
@@ -65,16 +65,12 @@ public class Client {
 		}
 		return pitanjaNiz;
 	}
-	private static void setUsername() throws IOException {
+	private static void setUsername() throws IOException, InterruptedException {
 		String input;
 		usernameGUI = new Username(waiter);
 		while(true) {
 			synchronized(waiter) {
-				try {
-					waiter.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				waiter.wait();
 			}
 			serverOutput.println(usernameGUI.getUsername());
 			input = serverInput.readLine();
@@ -85,12 +81,8 @@ public class Client {
 			} else break;
 		}
 		username = usernameGUI.getUsername();
-		input = serverInput.readLine();
-		usernameGUI.setPair(input);
-		//input je ">>> Tvoj par je " + pair.username
-		usernameOfPair = input.substring(16);
 	}
-	private static void startMojBroj() throws IOException {
+	private static void startMojBroj() throws IOException, InterruptedException {
 		String input = serverInput.readLine();
 		JSONObject object = parseJSON(input);
 		if(object == null) {
@@ -101,11 +93,7 @@ public class Client {
 		mojbrojGUI = new MojBroj(myNumbers, waiter, username, usernameOfPair, scores, scoresOfPair);
 		//new Thread(mojbrojGUI).start();
 		synchronized(waiter) {
-			try {
-				waiter.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			waiter.wait();
 		}
 		serverOutput.println(Integer.toString(mojbrojGUI.getFinishedNumber()));
 		do {
@@ -115,8 +103,7 @@ public class Client {
 		scores = mojbrojGUI.getScores();
 		scoresOfPair = mojbrojGUI.getScoresOfPair();
 	}
-	
-	private static void startQuiz() throws IOException {
+	private static void startQuiz() throws IOException, InterruptedException {
 		String input = serverInput.readLine();
 		JSONObject object = parseJSON(input);
 		if(object == null) {
@@ -128,11 +115,7 @@ public class Client {
 		int i = 0;
 		do {
 			synchronized(waiter) {
-				try {
-					waiter.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				waiter.wait();
 			}
 			serverOutput.println(quizGUI.getIsCorrect());
 			input = serverInput.readLine();
@@ -142,7 +125,6 @@ public class Client {
 		scores = quizGUI.getScores();
 		scoresOfPair = quizGUI.getScoresOfPair();
 	}
-	
 	private static JSONObject parseJSON(String input) {
 		JSONParser parser = new JSONParser();
 		JSONObject object = null;
@@ -153,10 +135,53 @@ public class Client {
 		}
 		return object;
 	}
+	private static void pair() throws IOException, InterruptedException {
+		pairingGUI = new Pairing(waiter, username);
+		synchronized(waiter) {
+			waiter.wait();
+		}
+		char key = pairingGUI.getMessage(); 
+		serverOutput.println(key);
+		switch (key) {
+		case 'R': {
+			usernameOfPair = serverInput.readLine();
+			pairingGUI.setPairLabel(usernameOfPair);
+			break;
+		}
+		case 'G': {
+			String code = serverInput.readLine();
+			pairingGUI.setCode(code);
+			usernameOfPair = serverInput.readLine();
+			pairingGUI.setPairLabel(usernameOfPair);
+			break;
+		}
+		case 'P': {
+			String code;
+			while(true) {
+				synchronized(waiter) {
+					waiter.wait();
+				}
+				code = pairingGUI.getCode();
+				serverOutput.println(code);
+				String input = serverInput.readLine();
+				if(input.equals("Uneli ste nepostojeci kod.")) {
+					pairingGUI.repeatCode(input);
+				} else {
+					usernameOfPair = input;
+					pairingGUI.setPairLabel(usernameOfPair);
+					break;
+				}
+			}
+			break;
+		}
+		default:
+			throw new IllegalArgumentException("Unexpected value: " + key);
+		}
+	}
 	
 	public static void main(String[] args) {
-		String ip = "192.168.0.18";
-		//String ip = "localhost";
+		//String ip = "192.168.0.18";
+		String ip = "localhost";
 		int port = 9001;
 		try {
 			socketCommunication = new Socket(ip, port);
@@ -167,11 +192,14 @@ public class Client {
 			waiter = new WaitMonitor();
 			
 			setUsername();
+			pair();
 			startMojBroj();
 			startQuiz();
 			socketCommunication.close();
 			return;
 		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}

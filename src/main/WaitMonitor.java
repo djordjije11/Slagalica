@@ -10,7 +10,6 @@ public class WaitMonitor {
 		return connectionCounter;
 	}
 	public WaitMonitor() {
-		
 	}
 	public WaitMonitor(int connectionCounter) {
 		this.connectionCounter = connectionCounter;

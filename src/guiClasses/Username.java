@@ -18,30 +18,20 @@ public class Username extends JFrame implements ActionListener {
 	private JTextField textField;
 	private JLabel label1;
 	private JLabel label2;
-	private JLabel label3;
 	private String username;
 	private WaitMonitor waiter;
 	
 	public void setMessage(String text) {
 		if(text.equals("Uneti username je vec koriscen. Pokusaj opet!")) {
 			label2.setText(text);
+			username = null;
+			textField.setText("");
 			textField.setEnabled(true);
 			sendButton.setEnabled(true);
 		} else {
 			label2.setText(text);
-			label3.setText("Trazimo para...");
-			this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+			this.dispose();
 		}
-	}
-	
-	public void setPair(String text) {
-		label3.setText(text);
-		try {
-			Thread.sleep(1500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.dispose();
 	}
 	
 	public String getUsername() {
@@ -64,9 +54,6 @@ public class Username extends JFrame implements ActionListener {
         label2 = new JLabel();
         label2.setBounds(70, 250, 280, 40);
         
-        label3 = new JLabel();
-        label3.setBounds(80, 300, 200, 40);
-        
         textField = new JTextField();
         textField.setBounds(110, 140, 200, 40);
         textField.setFont(new Font("Consolas", Font.BOLD, 26));
@@ -78,7 +65,6 @@ public class Username extends JFrame implements ActionListener {
         
         this.add(label1);
         this.add(label2);
-        this.add(label3);
         this.add(textField);
         this.add(sendButton);
         
