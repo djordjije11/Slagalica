@@ -3,16 +3,16 @@ package guiClasses;
 import java.awt.TextArea;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.PrintStream;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-
 import main.WaitMonitor;
 
 public class Pairing extends JFrame implements ActionListener {
-
+	
 	private JButton randomPairingButton;
     private JButton getCodeButton;
 	private JButton putCodeButton;
@@ -23,6 +23,7 @@ public class Pairing extends JFrame implements ActionListener {
 	private WaitMonitor waiter;
 	private char message;
 	private String code;
+	private PrintStream serverOutput;
 	
 	public String getCode() {
 		return code;
@@ -51,13 +52,14 @@ public class Pairing extends JFrame implements ActionListener {
 		this.dispose();
 	}
 	
-	public Pairing(WaitMonitor waiter, String username) {
+	public Pairing(WaitMonitor waiter, String username, PrintStream serverOutput) {
 		this.waiter = waiter;
-		
+		this.serverOutput = serverOutput;
 		ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
 		this.setIconImage(icon.getImage());
         this.setTitle("Slagalica");
-        this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        //this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.setSize(420, 450);
         this.setResizable(false);
         this.setLayout(null);
@@ -99,6 +101,13 @@ public class Pairing extends JFrame implements ActionListener {
 		sendCodeButton.setVisible(false);
 		this.add(codeArea);
 		this.add(sendCodeButton);
+		
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
+			public void windowClosing(java.awt.event.WindowEvent e) {
+				serverOutput.println("EXIT");
+				System.exit(0);
+			}
+		});
 		
 		this.setVisible(true);
 	}

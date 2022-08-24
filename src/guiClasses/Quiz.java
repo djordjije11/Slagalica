@@ -2,6 +2,7 @@ package guiClasses;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -22,6 +23,8 @@ public class Quiz extends Gui implements ActionListener {
 	private boolean isOver = false;
 	private JLabel vreme;
 	private int questionCounter = 0;
+	
+	private JLabel messageLabel;
 	
 	TimerTask task;
 	
@@ -64,7 +67,8 @@ public class Quiz extends Gui implements ActionListener {
 			break;
 		}
 		default:
-			throw new IllegalArgumentException("Unexpected value: " + text);
+			messageLabel.setText(text);
+    		return;
 		}
 	}
 	public String getIsCorrect() {
@@ -138,8 +142,8 @@ public class Quiz extends Gui implements ActionListener {
 			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		}
 	}
-	public Quiz(Questions[] pitanjaNiz, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore) {
-		super(waiter, username, usernameOfPair, score, pairScore);
+	public Quiz(Questions[] pitanjaNiz, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
+		super(waiter, username, usernameOfPair, score, pairScore, serverOutput);
 		this.pitanjaNiz = pitanjaNiz;
         this.setTitle("Quiz");
         initializePitanje();
@@ -148,6 +152,10 @@ public class Quiz extends Gui implements ActionListener {
     	vreme = new JLabel("10");
         vreme.setBounds(10, 20, 40, 40);
         this.add(vreme);
+        
+        messageLabel = new JLabel();
+        messageLabel.setBounds(100, 300, 300, 50);
+        this.add(messageLabel);
     	
         this.setVisible(true);
         setPitanje();

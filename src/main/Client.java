@@ -24,9 +24,10 @@ import quizClasses.Questions;
 public class Client {
 	private static Socket socketCommunication;
 	private static BufferedReader serverInput;
-	private static PrintStream serverOutput;
+	public static PrintStream serverOutput;
 	//private static BufferedReader console;
 	
+	private static boolean isQuit = false;
 	private static Username usernameGUI;
 	private static Pairing pairingGUI;
 	private static MojBroj mojbrojGUI;
@@ -51,8 +52,8 @@ public class Client {
 	}
 	private static Questions[] getQuestionsFromJSON(JSONObject object) {
 		JSONArray questions = (JSONArray) object.get("questions");
-		Questions[] pitanjaNiz = new Questions[4];
-		for(int i = 0; i < 4; i++) {
+		Questions[] pitanjaNiz = new Questions[5];
+		for(int i = 0; i < 5; i++) {
 			JSONObject question = (JSONObject) questions.get(i);
 			String pitanje = (String) question.get("question");
 			String tacanOdgovor = (String) question.get("correctAnswer");
@@ -85,33 +86,26 @@ public class Client {
 	private static void startMojBroj() throws IOException, InterruptedException {
 		String input = serverInput.readLine();
 		JSONObject object = parseJSON(input);
-		if(object == null) {
-			System.out.println("GRESKA");
-			return;
-		}
 		MyNumbers myNumbers = getMyNumbersFromJSON(object);
-		mojbrojGUI = new MojBroj(myNumbers, waiter, username, usernameOfPair, scores, scoresOfPair);
-		//new Thread(mojbrojGUI).start();
+		mojbrojGUI = new MojBroj(myNumbers, waiter, username, usernameOfPair, scores, scoresOfPair, serverOutput);
 		synchronized(waiter) {
 			waiter.wait();
 		}
 		serverOutput.println(Integer.toString(mojbrojGUI.getFinishedNumber()));
-		do {
-			input = serverInput.readLine();
-		} while (input == null);
+		input = serverInput.readLine();
 		mojbrojGUI.setMessageLabel(input);
+		if(input.equals("Protivnik je napustio igru.")) {
+			isQuit = true;
+			return;
+		}
 		scores = mojbrojGUI.getScores();
 		scoresOfPair = mojbrojGUI.getScoresOfPair();
 	}
 	private static void startQuiz() throws IOException, InterruptedException {
 		String input = serverInput.readLine();
 		JSONObject object = parseJSON(input);
-		if(object == null) {
-			System.out.println("GRESKA");
-			return;
-		}
 		Questions[] pitanjaNiz = getQuestionsFromJSON(object);
-		quizGUI = new Quiz(pitanjaNiz, waiter, username, usernameOfPair, scores, scoresOfPair);
+		quizGUI = new Quiz(pitanjaNiz, waiter, username, usernameOfPair, scores, scoresOfPair, serverOutput);
 		int i = 0;
 		do {
 			synchronized(waiter) {
@@ -120,8 +114,12 @@ public class Client {
 			serverOutput.println(quizGUI.getIsCorrect());
 			input = serverInput.readLine();
 			quizGUI.setMessage(input);
+			if(input.equals("Protivnik je napustio igru.")) {
+				isQuit = true;
+				return;
+			}
 			i++;
-		} while (i < 4);
+		} while (i < 5);
 		scores = quizGUI.getScores();
 		scoresOfPair = quizGUI.getScoresOfPair();
 	}
@@ -136,7 +134,7 @@ public class Client {
 		return object;
 	}
 	private static void pair() throws IOException, InterruptedException {
-		pairingGUI = new Pairing(waiter, username);
+		pairingGUI = new Pairing(waiter, username, serverOutput);
 		synchronized(waiter) {
 			waiter.wait();
 		}
@@ -194,7 +192,9 @@ public class Client {
 			setUsername();
 			pair();
 			startMojBroj();
-			startQuiz();
+			if(!isQuit) {
+				startQuiz();
+			}
 			socketCommunication.close();
 			return;
 		} catch (IOException e) {

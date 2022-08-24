@@ -3,6 +3,9 @@ package main;
 public class WaitMonitor {
 	private int connectionCounter = 0;
 	
+	public void removeConnection() {
+		connectionCounter--;
+	}
 	public void addConnection() {
 		connectionCounter++;
 	}

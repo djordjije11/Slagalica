@@ -1,9 +1,6 @@
 package test;
 
-import guiClasses.Pairing;
-import guiClasses.Quiz;
-import main.WaitMonitor;
-import quizClasses.Questions;
+import guiClasses.Gui;
 
 public class Test {
 

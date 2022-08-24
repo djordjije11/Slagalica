@@ -39,11 +39,15 @@ public class ClientHandler extends Thread {
 	public String isCorrectAnswer;
 	public String isCorrectAnswerOfPair;
 	
+	
+	public void setIsQuit(boolean hm) {
+		isQuit = hm;
+	}
 	public String getCode() { 
 		return code;
 	}
 	private Questions[] getRandomQuestions() {
-		Questions[] pitanja = new Questions[4];
+		Questions[] pitanja = new Questions[5];
 		LinkedList<Questions> questions = (LinkedList<Questions>) Server.questionsList.clone();
 		for (int i = 0; i < pitanja.length; i++) {
 			pitanja[i] = questions.get(new Random().nextInt(questions.size()));
@@ -79,7 +83,7 @@ public class ClientHandler extends Thread {
 		pair.waiterPair = waiterPair;
 		Server.waitersPair.add(waiterPair);
 	}
-	private void pairRandom() {
+	private void pairRandom() throws InterruptedException {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
 				if(client != this && client.isPaired == false && waiterPair == client.getWaiterPair()) {				
@@ -99,16 +103,16 @@ public class ClientHandler extends Thread {
 				}
 			}
 		}
-		// AKO NECE STAVI WHILE UMESTO IF
 		if(!isPaired) {
+			ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
+			exit.start();
 			synchronized(waiterPair) {
-				try {
-					waiterPair.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				waiterPair.wait();
 			}
-			//createNewWaiterPair();
+			if(isQuit == false) {
+				exit.interrupt();
+			}
+			else return;
 		}
 		clientOutput.println(pair.getUsername());
 	}
@@ -165,12 +169,23 @@ public class ClientHandler extends Thread {
 		objectJson.put("wantedNumber", myNumbers.getWantedNumber());
 		clientOutput.println(objectJson.toJSONString());
 	}
-	private void startMojBroj() throws IOException {
+	private void startMojBroj() throws IOException, InterruptedException {
 		writeMyNumbersJson(username + "_myNumbersJSON.json");
-		String message;
-		do {
-			message = clientInput.readLine();
-		} while (message == null);
+		String message = clientInput.readLine();
+		if(message.equals("EXIT")) {
+			setIsQuit(true);
+			pair.setIsQuit(true);
+			if(pair.isMojBrojPlayed) {
+				synchronized(waiterPair) {
+					waiterPair.notify();
+				}
+			}
+			return;
+		}
+		if(isQuit) {
+			clientOutput.println("Protivnik je napustio igru.");
+			return;
+		}
 		//Primljen je mojBrojFinishedNumber iz igre Moj Broj
 		mojBrojFinishedNumber = Integer.parseInt(message);
 		isMojBrojPlayed = true;
@@ -185,14 +200,13 @@ public class ClientHandler extends Thread {
 		} else {
 			while(!isMojBrojPlayedOfPair) {
 				synchronized(waiterPair) {
-					try {
-						waiterPair.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
+					waiterPair.wait();
+				}
+				if(isQuit) {
+					clientOutput.println("Protivnik je napustio igru.");
+					return;
 				}
 			}
-			//createNewWaiterPair();
 		}
 		if(mojBrojFinishedNumber < mojBrojFinishedNumberOfPair) {
 			clientOutput.println("Pobedili ste!");
@@ -202,12 +216,24 @@ public class ClientHandler extends Thread {
 			clientOutput.println("Nereseno!");
 		}
 	}
-	private void startQuiz() throws IOException {
+	private void startQuiz() throws IOException, InterruptedException {
 		writePitanja(nizPitanja);
 		String input;
 		int i = 0;
 		do {
 			input = clientInput.readLine();
+			if(input.equals("EXIT")) {
+				setIsQuit(true);
+				pair.setIsQuit(true);
+				synchronized(waiterPair) {
+					waiterPair.notify();
+				}
+				return;
+			}
+			if(isQuit) {
+				clientOutput.println("Protivnik je napustio igru.");
+				return;
+			}
 			isCorrectAnswer = input;
 			isQuestionAnswered = true;
 			if(pair.isQuestionAnswered) {
@@ -220,11 +246,11 @@ public class ClientHandler extends Thread {
 			} else {
 				while(!isQuestionAnsweredOfPair) {
 					synchronized(waiterPair) {
-						try {
-							waiterPair.wait();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						waiterPair.wait();
+					}
+					if(isQuit) {
+						clientOutput.println("Protivnik je napustio igru.");
+						return;
 					}
 				}
 			}
@@ -232,7 +258,7 @@ public class ClientHandler extends Thread {
 			clientOutput.println(key);
 			isQuestionAnswered = false; isCorrectAnswer = null; isQuestionAnsweredOfPair = false; isCorrectAnswerOfPair = null;
 			i++;
-		} while(i < 4);
+		} while(i < 5);
 	}
 	private void writePitanja(Questions[] nizPitanja) {
 		JSONObject quiz = new JSONObject();
@@ -241,23 +267,29 @@ public class ClientHandler extends Thread {
 		JSONObject question2 = new JSONObject();
 		JSONObject question3 = new JSONObject();
 		JSONObject question4 = new JSONObject();
+		JSONObject question5 = new JSONObject();
 		JSONArray answers1 = initializeAnswersJSON(nizPitanja[0]);
 		JSONArray answers2 = initializeAnswersJSON(nizPitanja[1]);
 		JSONArray answers3 = initializeAnswersJSON(nizPitanja[2]);
 		JSONArray answers4 = initializeAnswersJSON(nizPitanja[3]);
+		JSONArray answers5 = initializeAnswersJSON(nizPitanja[4]);
 		question1.put("answers", answers1);
 		question2.put("answers", answers2);
 		question3.put("answers", answers3);
 		question4.put("answers", answers4);
+		question5.put("answers", answers5);
 		question1.put("question", nizPitanja[0].getQuestion());
 		question2.put("question", nizPitanja[1].getQuestion());
 		question3.put("question", nizPitanja[2].getQuestion());
 		question4.put("question", nizPitanja[3].getQuestion());
+		question5.put("question", nizPitanja[4].getQuestion());
 		question1.put("correctAnswer", nizPitanja[0].getCorrectAnswer());
 		question2.put("correctAnswer", nizPitanja[1].getCorrectAnswer());
 		question3.put("correctAnswer", nizPitanja[2].getCorrectAnswer());
 		question4.put("correctAnswer", nizPitanja[3].getCorrectAnswer());
-		questions.add(question1); questions.add(question2); questions.add(question3); questions.add(question4);
+		question5.put("correctAnswer", nizPitanja[4].getCorrectAnswer());
+		questions.add(question1); questions.add(question2); questions.add(question3);
+		questions.add(question4); questions.add(question5);
 		quiz.put("questions", questions);
 		clientOutput.println(quiz.toJSONString());
 	}
@@ -314,9 +346,15 @@ public class ClientHandler extends Thread {
 			waiterPair = new WaitMonitor(1);
 			Server.waitersPair.add(waiterPair);
 			while(!isPaired) {
+				ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
+				exit.start();
 				synchronized(waiterPair) {
 					waiterPair.wait();
 				}
+				if(isQuit == false) {
+					exit.interrupt();
+				}
+				else return;
 			}
 			clientOutput.println(pair.username);
 			break;
@@ -339,22 +377,28 @@ public class ClientHandler extends Thread {
 			break;
 		}
 		default:
-			throw new IllegalArgumentException("Unexpected value: " + key);
+			setIsQuit(true);
+			return;
 		}
 	}
 	
 	private void finish() {
+		isQuit = true;
 		if(Server.codesList.contains(code)) {
 			Server.codesList.remove(code);
 		}
-		if(Server.waitersPair.contains(waiterPair)) {
+		if(waiterPair != null) { 
+			waiterPair.removeConnection();
+		}
+		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super al kako?
+		if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
 			Server.waitersPair.remove(waiterPair);
 		}
+		waiterPair = null;
 		if(username != null) {
 			Server.onlineUsers.remove(this);
 		}
 	}
-	
 	
 	@Override
 	public void run() {
@@ -363,14 +407,14 @@ public class ClientHandler extends Thread {
 			clientOutput = new PrintStream(socketCommunication.getOutputStream());
 			
 			setUsername();
-			while(!isQuit) {
-				if(!isPaired) {
-					pairing();
-				}
+			if(!isPaired) {
+				pairing();
+			}
+			if(!isQuit) {
 				startMojBroj();
+			}
+			if(!isQuit) {
 				startQuiz();
-				isQuit = true;
-				break;
 			}
 			
 			finish();

@@ -7,6 +7,7 @@ import mojbrojClasses.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -54,6 +55,10 @@ public class MojBroj extends Gui implements ActionListener {
     	return finishedNumber;
     }
     public void setMessageLabel(String text) {
+    	if(text.equals("Protivnik je napustio igru.")) {
+    		messageLabel.setText(text);
+    		return;
+    	}
     	if(text.equals("Pobedili ste!")) {
     		addScores(20, 0);
     	} else if(text.equals("Izgubili ste!")) {
@@ -69,8 +74,8 @@ public class MojBroj extends Gui implements ActionListener {
     	//this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
-    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair){
-    	super(waiter, username, usernameOfPair, score, scoreOfPair);
+    public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair, PrintStream serverOutput){
+    	super(waiter, username, usernameOfPair, score, scoreOfPair, serverOutput);
     	this.myNumbers = myNumbers;
         this.setTitle("Moj Broj");
         
