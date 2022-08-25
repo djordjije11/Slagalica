@@ -28,13 +28,10 @@ public class MojBroj extends Gui implements ActionListener {
     private JLabel labelResult;		//LABELA ZA BROJ KOJI SMO DOBILI RACUNANJEM, I ZA SAM ISPIS RACUNA
     private JLabel messageLabel;
     private int result;         //BROJ KOJI SMO DOBILI RACUNANJEM
-    
     private MyNumbers myNumbers;
     private int finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
-
     private JLabel vreme;
     private boolean isOver = false;
-    
     private TimerTask task;
 
     static int countStringInString(String wholeString, String countPart){
@@ -50,7 +47,6 @@ public class MojBroj extends Gui implements ActionListener {
         }
         return false;
     }
-    
     public int getFinishedNumber() {
     	return finishedNumber;
     }
@@ -63,7 +59,12 @@ public class MojBroj extends Gui implements ActionListener {
     		addScores(20, 0);
     	} else if(text.equals("Izgubili ste!")) {
     		addScores(0, 20);
-    	} else addScores(10, 10);
+    	} else if(text.equals("Oba igraca bez bodova!")) {
+    		//igraci ne dobijaju bodove
+    	} else {
+    		//igraci dobili isti broj
+    		addScores(10, 10);
+    	}
     	messageLabel.setText(text);
     	try {
 			Thread.sleep(1500);
@@ -71,7 +72,6 @@ public class MojBroj extends Gui implements ActionListener {
 			e.printStackTrace();
 		}
     	this.dispose();
-    	//this.setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
     
     public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair, PrintStream serverOutput){
@@ -241,7 +241,7 @@ public class MojBroj extends Gui implements ActionListener {
             }
         } catch(Exception z){
         	finishedNumber = Integer.MAX_VALUE;
-            labelResult.setText("GRESKA PRI FUNKCIJI EVAL");
+            labelResult.setText("GRESKA, NIJE UNET BROJ");
             endButtons();
             return;
         }

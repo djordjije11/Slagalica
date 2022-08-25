@@ -18,20 +18,17 @@ public class Quiz extends Gui implements ActionListener {
 	private JLabel questionLabel;
 	private JButton nextButton;
 	private Questions[] pitanjaNiz = new Questions[4];
-	
 	private String isCorrect;
 	private boolean isOver = false;
 	private JLabel vreme;
 	private int questionCounter = 0;
-	
 	private JLabel messageLabel;
-	
 	TimerTask task;
 	
 	public void setMessage(String text) {
 		switch (text) {
 		case "yes-yes": {
-			addScores(10, 10);
+			addScores(5, 5);
 			break;
 		}
 		case "yes-no": {
@@ -139,7 +136,8 @@ public class Quiz extends Gui implements ActionListener {
 			isOver = false;
 			setPitanje();
 		} else {
-			this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+			isOver = true;
+			//dispose();
 		}
 	}
 	public Quiz(Questions[] pitanjaNiz, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
@@ -160,7 +158,6 @@ public class Quiz extends Gui implements ActionListener {
         this.setVisible(true);
         setPitanje();
 	}
-	
 	private void deadButtons() {
 		for (int i = 0; i < answersButton.length; i++) {
 			answersButton[i].setEnabled(false);

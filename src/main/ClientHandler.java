@@ -7,10 +7,8 @@ import java.io.PrintStream;
 import java.net.Socket;
 import java.util.LinkedList;
 import java.util.Random;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
 import mojbrojClasses.MyNumbers;
 import quizClasses.Questions;
 
@@ -18,33 +16,46 @@ public class ClientHandler extends Thread {
 	private BufferedReader clientInput = null;
 	private PrintStream clientOutput = null;
 	private Socket socketCommunication = null;
+	private WaitMonitor waiterPair;
 	
 	private String username;
-	public ClientHandler pair;
-	public boolean isPaired = false;
 	private boolean isQuit = false;
-	private WaitMonitor waiterPair;
+	private ClientHandler pair;
+	private boolean isPaired = false;
 	private String code;
 	
-	public MyNumbers myNumbers;
-	public Questions[] nizPitanja;
+	//ATRIBUTI ZA IGRU MOJ BROJ
+	private MyNumbers myNumbers;
+	private boolean isMojBrojPlayed = false;
+	private boolean isMojBrojPlayedOfPair = false;
+	private int mojBrojFinishedNumber;
+	private int mojBrojFinishedNumberOfPair;
+	//ATRIBUTI ZA IGRU KVIZ (KO ZNA ZNA)
+	private Questions[] nizPitanja;
+	private boolean isQuestionAnswered = false;
+	private boolean isQuestionAnsweredOfPair = false;
+	private String isCorrectAnswer;
+	private String isCorrectAnswerOfPair;
 	
-	public boolean isMojBrojPlayed = false;
-	public boolean isMojBrojPlayedOfPair = false;
-	public int mojBrojFinishedNumber;
-	public int mojBrojFinishedNumberOfPair;
 	
-	public boolean isQuestionAnswered = false;
-	public boolean isQuestionAnsweredOfPair = false;
-	public String isCorrectAnswer;
-	public String isCorrectAnswerOfPair;
-	
-	
+	ClientHandler(Socket socketCommunication) {
+		this.socketCommunication = socketCommunication;
+	}
+	ClientHandler(String username){
+		this.username = username;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof ClientHandler)) {
+			return false;
+		}
+		ClientHandler client = (ClientHandler) obj;
+		if(this.username.equals(client.username)) {
+			return true;
+		} else return false;
+	}
 	public void setIsQuit(boolean hm) {
 		isQuit = hm;
-	}
-	public String getCode() { 
-		return code;
 	}
 	private Questions[] getRandomQuestions() {
 		Questions[] pitanja = new Questions[5];
@@ -55,38 +66,29 @@ public class ClientHandler extends Thread {
 		}
 		return pitanja;
 	}
-	public WaitMonitor getWaiterPair() {
-		return waiterPair;
-	}
-	public String getUsername() {
-		return username;
-	}
-	@Override
-	public boolean equals(Object obj) {
-		if(!(obj instanceof ClientHandler)) {
-			return false;
-		}
-		ClientHandler client = (ClientHandler) obj;
-		if(this.username.equals(client.getUsername())) {
-			return true;
-		} else return false;
-	}
-	ClientHandler(Socket socketCommunication) {
-		this.socketCommunication = socketCommunication;
-	}
-	ClientHandler(String username){
-		this.username = username;
-	}
 	private void createNewWaiterPair() {
 		Server.waitersPair.remove(waiterPair);
 		waiterPair = new WaitMonitor(2);
 		pair.waiterPair = waiterPair;
 		Server.waitersPair.add(waiterPair);
 	}
+	private void setUsername() throws IOException {
+		String input;
+		do {
+			input = clientInput.readLine();
+			if(Server.onlineUsers.contains(new ClientHandler(input))) {
+				clientOutput.println("Uneti username je vec koriscen. Pokusaj opet!");
+				continue;
+			} else break;
+		} while (true);
+		username = input;
+		Server.onlineUsers.add(this);
+		clientOutput.println("Dobrodosli " + username + "!");
+	}
 	private void pairRandom() throws InterruptedException {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
-				if(client != this && client.isPaired == false && waiterPair == client.getWaiterPair()) {				
+				if(client != this && client.isPaired == false && waiterPair == client.waiterPair) {				
 					client.pair = this;
 					this.pair = client;
 					pair.isPaired = true;
@@ -111,53 +113,93 @@ public class ClientHandler extends Thread {
 			}
 			if(isQuit == false) {
 				exit.interrupt();
-			}
-			else return;
+			} else return;
 		}
-		clientOutput.println(pair.getUsername());
+		clientOutput.println(pair.username);
 	}
-	private void setUsername() throws IOException {
-		String input;
-		do {
-			input = clientInput.readLine();
-			if(Server.onlineUsers.contains(new ClientHandler(input))) {
-				clientOutput.println("Uneti username je vec koriscen. Pokusaj opet!");
-				continue;
-			} else break;
-		} while (true);
-		username = input;
-		Server.onlineUsers.add(this);
-		clientOutput.println("Dobrodosli " + username + "!");
-	}
-	private void sendMessages() throws IOException {
-		String message;
-		while(true) {
-			message = clientInput.readLine();
-			if(message == null) return;
-			if(message.equals("***quit")) {
-				isQuit = true;
-				this.clientOutput.println(">>> Dovidjenja!");
-				for (ClientHandler client : Server.onlineUsers) {
-					if(client == pair) {
-						client.pair = null;
-						client.clientOutput.println(">>> Doticni " + username + " nas je napustio.");
-						client.clientOutput.println(">>> Ukoliko zelite da nadjete novu konekciju, ukucajte ***reset\nUkoliko zelite da izadjete, ukucajte ***quit");
-						return;
-					}
-				}
-			} else if(message.equals("***reset")){
-				isPaired = false;
-				return;
-			} else {
-				for (ClientHandler client : Server.onlineUsers) {
-					if(client != null && client == pair) {
-						client.clientOutput.println(username + ": " + message);
-					}
+	private void pairByCode() throws IOException, InterruptedException {	
+		for (ClientHandler client : Server.onlineUsers) {
+			if(client != this && client.isPaired == false && code.equals(client.code)) {
+				this.waiterPair = client.waiterPair;
+				waiterPair.addConnection();
+				synchronized(waiterPair) {
+					client.pair = this;
+					this.pair = client;
+					pair.isPaired = true;
+					this.isPaired = true;
+					myNumbers = new MyNumbers();
+					pair.myNumbers = this.myNumbers;
+					nizPitanja = getRandomQuestions();
+					pair.nizPitanja = this.nizPitanja;
+					waiterPair.notify();
+					break;
 				}
 			}
 		}
+		clientOutput.println(pair.username);
 	}
-	private void writeMyNumbersJson(String text) {
+	private void pairing() throws IOException, InterruptedException {
+		String key = clientInput.readLine();
+		switch (key) {
+		//SLUCAJ NASUMICNOG POVEZIVANJA
+		case "R": {
+			for (WaitMonitor waiter : Server.waitersPair) {
+				if(waiter.getConnectionCounter() < 2) {
+					waiterPair = waiter;
+					waiterPair.addConnection();
+					break;
+				}
+			}
+			pairRandom();
+			break;
+		}
+		//SLUCAJ OTVARANJA SOBE I GENERISANJA KODA
+		case "G": {
+			synchronized(Server.codesList) {
+				code = Server.generateCode();
+				Server.codesList.add(code);
+			}
+			clientOutput.println(code);
+			waiterPair = new WaitMonitor(1);
+			Server.waitersPair.add(waiterPair);
+			while(!isPaired) {
+				ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
+				exit.start();
+				synchronized(waiterPair) {
+					waiterPair.wait();
+				}
+				if(isQuit == false) {
+					exit.interrupt();
+				}
+				else return;
+			}
+			clientOutput.println(pair.username);
+			break;
+		}
+		//SLUCAJ PRISTUPANJA SOBI PUTEM KODA
+		case "P": {
+			while(true) {
+				String input = clientInput.readLine();
+				synchronized(Server.codesList) {
+					if(!Server.codesList.contains(input)) {
+						clientOutput.println("Uneli ste nepostojeci kod.");
+						continue;
+					} else {
+						code = input;
+						Server.codesList.remove(code);
+						break;
+					}
+				}
+			}
+			pairByCode();
+			break;
+		}
+		default:
+			setIsQuit(true);
+			return;
+		}
+	}
+	private void writeMyNumbersJson() {
 		JSONObject objectJson = new JSONObject();
 		JSONArray arrayJson = new JSONArray();
 		for (int i = 0; i < myNumbers.getBrojeviLength(); i++) {
@@ -170,7 +212,7 @@ public class ClientHandler extends Thread {
 		clientOutput.println(objectJson.toJSONString());
 	}
 	private void startMojBroj() throws IOException, InterruptedException {
-		writeMyNumbersJson(username + "_myNumbersJSON.json");
+		writeMyNumbersJson();
 		String message = clientInput.readLine();
 		if(message.equals("EXIT")) {
 			setIsQuit(true);
@@ -212,9 +254,32 @@ public class ClientHandler extends Thread {
 			clientOutput.println("Pobedili ste!");
 		} else if(mojBrojFinishedNumber > mojBrojFinishedNumberOfPair) {
 			clientOutput.println("Izgubili ste!");
+		} else if(mojBrojFinishedNumber == Integer.MAX_VALUE && mojBrojFinishedNumberOfPair == Integer.MAX_VALUE) {
+			clientOutput.println("Oba igraca bez bodova!");
 		} else {
 			clientOutput.println("Nereseno!");
+		} 
+	}
+	private JSONArray initializeAnswersJSON(Questions pitanje) {
+		JSONArray answers = new JSONArray();
+		for (int i = 0; i < 4; i++) {
+			answers.add(pitanje.getAnswer(i));
 		}
+		return answers;
+	}
+	private void writePitanja(Questions[] nizPitanja) {
+		JSONObject quiz = new JSONObject();
+		JSONArray questions = new JSONArray();
+		for(int questionIndex = 0; questionIndex < 5; questionIndex++) {
+			JSONObject question = new JSONObject();
+			JSONArray answers = initializeAnswersJSON(nizPitanja[questionIndex]);
+			question.put("answers", answers);
+			question.put("question", nizPitanja[questionIndex].getQuestion());
+			question.put("correctAnswer", nizPitanja[questionIndex].getCorrectAnswer());
+			questions.add(question);
+		}
+		quiz.put("questions", questions);
+		clientOutput.println(quiz.toJSONString());
 	}
 	private void startQuiz() throws IOException, InterruptedException {
 		writePitanja(nizPitanja);
@@ -260,128 +325,6 @@ public class ClientHandler extends Thread {
 			i++;
 		} while(i < 5);
 	}
-	private void writePitanja(Questions[] nizPitanja) {
-		JSONObject quiz = new JSONObject();
-		JSONArray questions = new JSONArray();
-		JSONObject question1 = new JSONObject();
-		JSONObject question2 = new JSONObject();
-		JSONObject question3 = new JSONObject();
-		JSONObject question4 = new JSONObject();
-		JSONObject question5 = new JSONObject();
-		JSONArray answers1 = initializeAnswersJSON(nizPitanja[0]);
-		JSONArray answers2 = initializeAnswersJSON(nizPitanja[1]);
-		JSONArray answers3 = initializeAnswersJSON(nizPitanja[2]);
-		JSONArray answers4 = initializeAnswersJSON(nizPitanja[3]);
-		JSONArray answers5 = initializeAnswersJSON(nizPitanja[4]);
-		question1.put("answers", answers1);
-		question2.put("answers", answers2);
-		question3.put("answers", answers3);
-		question4.put("answers", answers4);
-		question5.put("answers", answers5);
-		question1.put("question", nizPitanja[0].getQuestion());
-		question2.put("question", nizPitanja[1].getQuestion());
-		question3.put("question", nizPitanja[2].getQuestion());
-		question4.put("question", nizPitanja[3].getQuestion());
-		question5.put("question", nizPitanja[4].getQuestion());
-		question1.put("correctAnswer", nizPitanja[0].getCorrectAnswer());
-		question2.put("correctAnswer", nizPitanja[1].getCorrectAnswer());
-		question3.put("correctAnswer", nizPitanja[2].getCorrectAnswer());
-		question4.put("correctAnswer", nizPitanja[3].getCorrectAnswer());
-		question5.put("correctAnswer", nizPitanja[4].getCorrectAnswer());
-		questions.add(question1); questions.add(question2); questions.add(question3);
-		questions.add(question4); questions.add(question5);
-		quiz.put("questions", questions);
-		clientOutput.println(quiz.toJSONString());
-	}
-	private JSONArray initializeAnswersJSON(Questions pitanje) {
-		JSONArray answers = new JSONArray();
-		for (int i = 0; i < 4; i++) {
-			answers.add(pitanje.getAnswer(i));
-		}
-		return answers;
-	}
-
-	private void pairByCode() throws IOException, InterruptedException {	
-		for (ClientHandler client : Server.onlineUsers) {
-			if(client != this && client.isPaired == false && code.equals(client.getCode())) {
-				this.waiterPair = client.getWaiterPair();
-				waiterPair.addConnection();
-				synchronized(waiterPair) {
-					client.pair = this;
-					this.pair = client;
-					pair.isPaired = true;
-					this.isPaired = true;
-					myNumbers = new MyNumbers();
-					pair.myNumbers = this.myNumbers;
-					nizPitanja = getRandomQuestions();
-					pair.nizPitanja = this.nizPitanja;
-					waiterPair.notify();
-					break;
-				}
-			}
-		}
-		clientOutput.println(pair.getUsername());
-	}
-	
-	private void pairing() throws IOException, InterruptedException {
-		String key = clientInput.readLine();
-		switch (key) {
-		case "R": {
-			for (WaitMonitor waiter : Server.waitersPair) {
-				if(waiter.getConnectionCounter() < 2) {
-					waiterPair = waiter;
-					waiterPair.addConnection();
-					break;
-				}
-			}
-			pairRandom();
-			break;
-		}
-		case "G": {
-			synchronized(Server.codesList) {
-				code = Server.generateCode();
-				Server.codesList.add(code);
-			}
-			clientOutput.println(code);
-			waiterPair = new WaitMonitor(1);
-			Server.waitersPair.add(waiterPair);
-			while(!isPaired) {
-				ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
-				exit.start();
-				synchronized(waiterPair) {
-					waiterPair.wait();
-				}
-				if(isQuit == false) {
-					exit.interrupt();
-				}
-				else return;
-			}
-			clientOutput.println(pair.username);
-			break;
-		}
-		case "P": {
-			while(true) {
-				String input = clientInput.readLine();
-				synchronized(Server.codesList) {
-					if(!Server.codesList.contains(input)) {
-						clientOutput.println("Uneli ste nepostojeci kod.");
-						continue;
-					} else {
-						code = input;
-						Server.codesList.remove(code);
-						break;
-					}
-				}
-			}
-			pairByCode();
-			break;
-		}
-		default:
-			setIsQuit(true);
-			return;
-		}
-	}
-	
 	private void finish() {
 		isQuit = true;
 		if(Server.codesList.contains(code)) {
@@ -390,7 +333,7 @@ public class ClientHandler extends Thread {
 		if(waiterPair != null) { 
 			waiterPair.removeConnection();
 		}
-		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super al kako?
+		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
 		if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
 			Server.waitersPair.remove(waiterPair);
 		}
@@ -407,9 +350,7 @@ public class ClientHandler extends Thread {
 			clientOutput = new PrintStream(socketCommunication.getOutputStream());
 			
 			setUsername();
-			if(!isPaired) {
-				pairing();
-			}
+			pairing();
 			if(!isQuit) {
 				startMojBroj();
 			}

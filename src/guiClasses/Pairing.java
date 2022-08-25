@@ -23,7 +23,7 @@ public class Pairing extends JFrame implements ActionListener {
 	private WaitMonitor waiter;
 	private char message;
 	private String code;
-	private PrintStream serverOutput;
+	//private PrintStream serverOutput;
 	
 	public String getCode() {
 		return code;
@@ -54,7 +54,7 @@ public class Pairing extends JFrame implements ActionListener {
 	
 	public Pairing(WaitMonitor waiter, String username, PrintStream serverOutput) {
 		this.waiter = waiter;
-		this.serverOutput = serverOutput;
+		//this.serverOutput = serverOutput;
 		ImageIcon icon = new ImageIcon("images\\slagalica.jpg");
 		this.setIconImage(icon.getImage());
         this.setTitle("Slagalica");
@@ -79,12 +79,12 @@ public class Pairing extends JFrame implements ActionListener {
 		randomPairingButton.setFocusable(false);
 		randomPairingButton.addActionListener(this);
 		this.add(randomPairingButton);
-		getCodeButton = new JButton("GENERISI KOD");
+		getCodeButton = new JButton("GENERISI KOD ZA OTVARANJE SOBE");
 		getCodeButton.setBounds(40, 110, 340, 70);
 		getCodeButton.setFocusable(false);
 		getCodeButton.addActionListener(this);
 		this.add(getCodeButton);
-		putCodeButton = new JButton("UNESI KOD");
+		putCodeButton = new JButton("PRISTUPI SOBI UNOSENJEM KODA");
 		putCodeButton.setBounds(40, 190, 340, 70);
 		putCodeButton.setFocusable(false);
 		putCodeButton.addActionListener(this);
