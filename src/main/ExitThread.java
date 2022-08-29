@@ -30,7 +30,7 @@ public class ExitThread extends Thread {
 			if(clientInput.readLine().equals("EXIT")) {
 				client.setIsQuit(true);
 				synchronized(waiter) {
-					waiter.notify();
+					waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
 				}
 			}
 		} catch(IOException e) {

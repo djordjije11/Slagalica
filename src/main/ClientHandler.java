@@ -19,19 +19,19 @@ public class ClientHandler extends Thread {
 	private WaitMonitor waiterPair;
 	
 	private String username;
-	private boolean isQuit = false;
-	private ClientHandler pair;
-	private boolean isPaired = false;
-	private String code;
+	private boolean isQuit = false;	//promenljiva koja odredjuje da li klijent zavrsava igru
+	private ClientHandler pair;	//promenljiva koja referencira ClientHandler instancu koja predstavlja igraca koji je par ovom igracu (ovoj instanci)
+	private boolean isPaired = false;	//promenljiva koja odredjuje da li je klijentu dodeljen njegov par (protivnik)
+	private String code; //promenljiva koja predstavlja generisan kod sobe kojoj kojoj je igrac pristupio (ukoliko je preko koda)
 	
 	//ATRIBUTI ZA IGRU MOJ BROJ
-	private MyNumbers myNumbers;
+	private MyNumbers myNumbers;	//random brojevi koji se dodeljuju igracu u igri
 	private boolean isMojBrojPlayed = false;
 	private boolean isMojBrojPlayedOfPair = false;
-	private int mojBrojFinishedNumber;
+	private int mojBrojFinishedNumber;	//razlika izmedju dobijenog i trazenog broja ovog igraca u igri Moj Broj
 	private int mojBrojFinishedNumberOfPair;
 	//ATRIBUTI ZA IGRU KVIZ (KO ZNA ZNA)
-	private Questions[] nizPitanja;
+	private Questions[] nizPitanja;		//random pitanja koja se dodeljuju igracu u igri
 	private boolean isQuestionAnswered = false;
 	private boolean isQuestionAnsweredOfPair = false;
 	private String isCorrectAnswer;
@@ -75,29 +75,31 @@ public class ClientHandler extends Thread {
 	private void setUsername() throws IOException {
 		String input;
 		do {
-			input = clientInput.readLine();
+			input = clientInput.readLine();	//cita se String koji je klijent uneo kao svoj username
 			if(Server.onlineUsers.contains(new ClientHandler(input))) {
 				clientOutput.println("Uneti username je vec koriscen. Pokusaj opet!");
 				continue;
 			} else break;
 		} while (true);
 		username = input;
-		Server.onlineUsers.add(this);
+		Server.onlineUsers.add(this);	//dodaje se listi aktivnih usera trenutni klijent
 		clientOutput.println("Dobrodosli " + username + "!");
 	}
 	private void pairRandom() throws InterruptedException {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
-				if(client != this && client.isPaired == false && waiterPair == client.waiterPair) {				
+				if(client != this && client.isPaired == false && waiterPair == client.waiterPair) {
+					//kada se nadju dve razlicite instance koje nisu povezane i imaju isti WaitMonitor objekat, povezuju se
 					client.pair = this;
 					this.pair = client;
 					pair.isPaired = true;
 					this.isPaired = true;
+					//dodeljuju se suparnicima isti brojevi i ista pitanja za igre
 					myNumbers = new MyNumbers();
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
 					pair.nizPitanja = this.nizPitanja;
-					waiterPair.notify();
+					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
 					/*
 					 *
 					 */
@@ -107,91 +109,97 @@ public class ClientHandler extends Thread {
 		}
 		if(!isPaired) {
 			ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
-			exit.start();
+			exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 			synchronized(waiterPair) {
-				waiterPair.wait();
+				waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je instanca povezana ili da je klijent napustio igru
 			}
 			if(isQuit == false) {
-				exit.interrupt();
+				exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
 			} else return;
 		}
-		clientOutput.println(pair.username);
+		clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 	}
 	private void pairByCode() throws IOException, InterruptedException {	
 		for (ClientHandler client : Server.onlineUsers) {
 			if(client != this && client.isPaired == false && code.equals(client.code)) {
+				//instanci se dodeljuje WaitMonitor objekat koji ima instanca koja ima i isti kod, kako bi se niti sinhronizovale
 				this.waiterPair = client.waiterPair;
 				waiterPair.addConnection();
+				Server.waitersPair.add(waiterPair);
 				synchronized(waiterPair) {
 					client.pair = this;
 					this.pair = client;
 					pair.isPaired = true;
 					this.isPaired = true;
+					//dodeljuju se suparnicima isti brojevi i ista pitanja za igre
 					myNumbers = new MyNumbers();
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
 					pair.nizPitanja = this.nizPitanja;
-					waiterPair.notify();
+					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
+					code = null; client.code = null;	//kod kojim su klijenti povezani im vise nije potreban
 					break;
 				}
 			}
 		}
-		clientOutput.println(pair.username);
+		clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 	}
 	private void pairing() throws IOException, InterruptedException {
-		String key = clientInput.readLine();
+		String key = clientInput.readLine();	//cita se od klijenta uneta opcija za povezivanje sa drugim igracem 
 		switch (key) {
-		//SLUCAJ NASUMICNOG POVEZIVANJA
+		//OPCIJA NASUMICNOG POVEZIVANJA
 		case "R": {
 			for (WaitMonitor waiter : Server.waitersPair) {
 				if(waiter.getConnectionCounter() < 2) {
 					waiterPair = waiter;
+					//ovoj instanci ClientHandler klase dodeljuje se WaitMonitor objekat koji nije zauzelo
+					//vise od jedne instance ClientHandler klase kako bi se te dve instance sinhronizovale putem tog objekta
 					waiterPair.addConnection();
 					break;
 				}
 			}
-			pairRandom();
+			pairRandom();	//pokrece se metoda koja vrsi "nasumicno povezivanje"
 			break;
 		}
-		//SLUCAJ OTVARANJA SOBE I GENERISANJA KODA
+		//OPCIJA OTVARANJA SOBE I GENERISANJA KODA
 		case "G": {
 			synchronized(Server.codesList) {
-				code = Server.generateCode();
-				Server.codesList.add(code);
+				code = Server.generateCode();	//generise se random kod
+				Server.codesList.add(code);	//izgenerisani kod se dodaje u listu gde se cuvaju svi trenutno aktivni kodovi
 			}
-			clientOutput.println(code);
-			waiterPair = new WaitMonitor(1);
-			Server.waitersPair.add(waiterPair);
+			clientOutput.println(code);	//klijentu se salje izgenerisani kod
+			waiterPair = new WaitMonitor(1);	//instanci se dodeljuje nov WaitMonitor objekat
+			//preko kog ce se sinhronizovati instanca ClientHandler klase koja hendluje klijenta koji je pristupio sobi putem istog koda
 			while(!isPaired) {
 				ExitThread exit = new ExitThread(waiterPair, this, socketCommunication);
-				exit.start();
+				exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 				synchronized(waiterPair) {
-					waiterPair.wait();
+					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je instanca povezana ili da je klijent napustio igru
 				}
 				if(isQuit == false) {
-					exit.interrupt();
+					exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
 				}
 				else return;
 			}
-			clientOutput.println(pair.username);
+			clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 			break;
 		}
-		//SLUCAJ PRISTUPANJA SOBI PUTEM KODA
+		//OPCIJA PRISTUPANJA SOBI PUTEM KODA
 		case "P": {
 			while(true) {
-				String input = clientInput.readLine();
+				String input = clientInput.readLine();	//cita se kod koji je uneo klijent
 				synchronized(Server.codesList) {
 					if(!Server.codesList.contains(input)) {
 						clientOutput.println("Uneli ste nepostojeci kod.");
 						continue;
 					} else {
 						code = input;
-						Server.codesList.remove(code);
+						Server.codesList.remove(code);	//kada se klijentima dodeli isti kod po kom ce se spojiti taj kod se brise iz baze kako se ne bi niko vise njim spojio
 						break;
 					}
 				}
 			}
-			pairByCode();
+			pairByCode();	//pokrece se metoda kojom se vrsi povezivanje putem koda
 			break;
 		}
 		default:
@@ -212,8 +220,8 @@ public class ClientHandler extends Thread {
 		clientOutput.println(objectJson.toJSONString());
 	}
 	private void startMojBroj() throws IOException, InterruptedException {
-		writeMyNumbersJson();
-		String message = clientInput.readLine();
+		writeMyNumbersJson();	//klijentu se salju random izgenerisani brojevi za igru
+		String message = clientInput.readLine();	//cita se poruka od servera u kojoj bi trebalo da se nalazi rezultat igre moj broj, tj. razlika izmedju trazenog i dobijenog broja
 		if(message.equals("EXIT")) {
 			setIsQuit(true);
 			pair.setIsQuit(true);
@@ -225,10 +233,9 @@ public class ClientHandler extends Thread {
 			return;
 		}
 		if(isQuit) {
-			clientOutput.println("Protivnik je napustio igru.");
+			clientOutput.println("Protivnik je napustio igru.");	//klijent se obavestava da je protivnik napustio igru
 			return;
 		}
-		//Primljen je mojBrojFinishedNumber iz igre Moj Broj
 		mojBrojFinishedNumber = Integer.parseInt(message);
 		isMojBrojPlayed = true;
 		if(pair.isMojBrojPlayed) {
@@ -238,11 +245,13 @@ public class ClientHandler extends Thread {
 				mojBrojFinishedNumberOfPair = pair.mojBrojFinishedNumber;
 				isMojBrojPlayedOfPair = pair.isMojBrojPlayed;
 				waiterPair.notify();
+				//instanca ce se naci u ovom slucaju ukoliko je njena odgovarajuca instanca Client klase druga zavrsila igru
+				//zato obavestava svog para (tj. povezanu instancu ClientHandler klase, tj. pair (atribut ove klase)) da je i on zavrsio
 			}
 		} else {
 			while(!isMojBrojPlayedOfPair) {
 				synchronized(waiterPair) {
-					waiterPair.wait();
+					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je protivnik isto zavrsio igru
 				}
 				if(isQuit) {
 					clientOutput.println("Protivnik je napustio igru.");
@@ -250,6 +259,7 @@ public class ClientHandler extends Thread {
 				}
 			}
 		}
+		//ClientHandler salje svom Clientu poruku o tome koji je ishod igre u zavisnosti od dobijenih rezultata igraca
 		if(mojBrojFinishedNumber < mojBrojFinishedNumberOfPair) {
 			clientOutput.println("Pobedili ste!");
 		} else if(mojBrojFinishedNumber > mojBrojFinishedNumberOfPair) {
@@ -282,21 +292,21 @@ public class ClientHandler extends Thread {
 		clientOutput.println(quiz.toJSONString());
 	}
 	private void startQuiz() throws IOException, InterruptedException {
-		writePitanja(nizPitanja);
+		writePitanja(nizPitanja);	//klijentu se salju random izgenerisana pitanja za igru
 		String input;
 		int i = 0;
 		do {
-			input = clientInput.readLine();
+			input = clientInput.readLine();	//cita se od klijenta poruka da li je odgovorio tacno ili mozda napustio igru
 			if(input.equals("EXIT")) {
 				setIsQuit(true);
 				pair.setIsQuit(true);
 				synchronized(waiterPair) {
-					waiterPair.notify();
+					waiterPair.notify();	//obavestava se par da je klijent napustio igru
 				}
 				return;
 			}
 			if(isQuit) {
-				clientOutput.println("Protivnik je napustio igru.");
+				clientOutput.println("Protivnik je napustio igru.");	//obavestava se klijent da je par napustio igru
 				return;
 			}
 			isCorrectAnswer = input;
@@ -306,12 +316,12 @@ public class ClientHandler extends Thread {
 					pair.isCorrectAnswerOfPair = this.isCorrectAnswer;
 					pair.isQuestionAnsweredOfPair = true;
 					this.isCorrectAnswerOfPair = pair.isCorrectAnswer;
-					waiterPair.notify();
+					waiterPair.notify();	//obavestava se protivnik da je klijent odigrao potez
 				}
 			} else {
 				while(!isQuestionAnsweredOfPair) {
 					synchronized(waiterPair) {
-						waiterPair.wait();
+						waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je i protivnik odigrao potez ili mozda napustio igru
 					}
 					if(isQuit) {
 						clientOutput.println("Protivnik je napustio igru.");
@@ -320,16 +330,13 @@ public class ClientHandler extends Thread {
 				}
 			}
 			String key = isCorrectAnswer + "-" + isCorrectAnswerOfPair;
-			clientOutput.println(key);
+			clientOutput.println(key);	//klijentu se salje ishod poteza u zavisnosti od odgovora igraca
 			isQuestionAnswered = false; isCorrectAnswer = null; isQuestionAnsweredOfPair = false; isCorrectAnswerOfPair = null;
 			i++;
-		} while(i < 5);
+		} while(i < 5);	//ponavlja se 5 puta jer igra sadrzi 5 pitanja, dakle 5 poteza
 	}
 	private void finish() {
 		isQuit = true;
-		if(Server.codesList.contains(code)) {
-			Server.codesList.remove(code);
-		}
 		if(waiterPair != null) { 
 			waiterPair.removeConnection();
 		}
