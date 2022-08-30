@@ -66,6 +66,7 @@ public class ClientHandler extends Thread {
 		}
 		return pitanja;
 	}
+	//ova metoda se ne koristi, ova ispod
 	private void createNewWaiterPair() {
 		Server.waitersPair.remove(waiterPair);
 		waiterPair = new WaitMonitor(2);
@@ -221,7 +222,7 @@ public class ClientHandler extends Thread {
 	}
 	private void startMojBroj() throws IOException, InterruptedException {
 		writeMyNumbersJson();	//klijentu se salju random izgenerisani brojevi za igru
-		String message = clientInput.readLine();	//cita se poruka od servera u kojoj bi trebalo da se nalazi rezultat igre moj broj, tj. razlika izmedju trazenog i dobijenog broja
+		String message = clientInput.readLine();	//cita se poruka od klijenta u kojoj bi trebalo da se nalazi rezultat igre moj broj, tj. razlika izmedju trazenog i dobijenog broja
 		if(message.equals("EXIT")) {
 			setIsQuit(true);
 			pair.setIsQuit(true);

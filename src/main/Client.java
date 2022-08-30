@@ -147,7 +147,7 @@ public class Client {
 		return pitanjaNiz;
 	}
 	private static void startQuiz() throws IOException, InterruptedException, ParseException {
-		String input = serverInput.readLine();	//cita se od servera objekat koji predstavlja pitanja koja su random dodeljeni igracu
+		String input = serverInput.readLine();	//cita se od servera objekat koji predstavlja pitanja koja su random dodeljena igracu
 		JSONObject object = parseJSON(input);
 		Questions[] pitanjaNiz = getQuestionsFromJSON(object);	//izvrsena je transformacija objekta iz json formata u java
 		quizGUI = new Quiz(pitanjaNiz, waiter, username, usernameOfPair, scores, scoresOfPair, serverOutput);	//otvara se gui
@@ -189,7 +189,6 @@ public class Client {
 			}
 			
 			socketCommunication.close();
-			return;
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
