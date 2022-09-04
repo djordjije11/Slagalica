@@ -17,13 +17,12 @@ public class Client {
 	private static Socket socketCommunication;
 	private static BufferedReader serverInput;
 	public static PrintStream serverOutput;
-	//private static BufferedReader console;
-	
 	private static WaitMonitor waiter;
 	private static boolean isQuit = false;
 	
 	private static Username usernameGUI;
 	private static Pairing pairingGUI;
+	private static Slova slagalicaGUI;
 	private static MojBroj mojbrojGUI;
 	private static Quiz quizGUI;
 	
@@ -94,6 +93,22 @@ public class Client {
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + key);
 		}
+	}
+	private static void startSlagalica() throws IOException, InterruptedException, ParseException {
+		String input = serverInput.readLine();	//cita se od servera objekat koji predstavlja brojeve koji su random dodeljeni igracu
+		slagalicaGUI = new Slova(input, waiter, username, usernameOfPair, scores, scoresOfPair, serverOutput);	//otvara se gui
+		synchronized(waiter) {
+			waiter.wait();	//ova nit ce stajati dok igrac ne zavrsi igru
+		}
+		serverOutput.println(slagalicaGUI.getFinishedRec());	//serveru se salje rezultat igraca, tj razlika izmedju trazenog broja i dobijenog
+		input = serverInput.readLine();	//cita se povratna informacija od servera o tome kako je i protivnik odigrao u odnosu na igraca
+		slagalicaGUI.setMessageLabel(input);	//na osnovu serverove poruke dodeljuju se bodovi igracima
+		if(input.equals("Protivnik je napustio igru.")) {
+			isQuit = true;
+			return;
+		}
+		scores = slagalicaGUI.getScores();	//cuvaju se bodovi igraca sa kraja igre kako bi se preneli u sledecu igru
+		scoresOfPair = slagalicaGUI.getScoresOfPair();	//cuvaju se bodovi protivnika sa kraja igre kako bi se preneli u sledecu igru
 	}
 	private static JSONObject parseJSON(String input) throws ParseException {
 		JSONParser parser = new JSONParser();
@@ -177,17 +192,16 @@ public class Client {
 			socketCommunication = new Socket(ip, port);
 			serverInput = new BufferedReader(new InputStreamReader(socketCommunication.getInputStream()));
 			serverOutput = new PrintStream(socketCommunication.getOutputStream());
-			//console = new BufferedReader(new InputStreamReader(System.in));
-			
 			waiter = new WaitMonitor();
-			
 			setUsername();	//klijent unosi username
 			pair();	//klijentu se dodeljuje drugi klijent, par
-			startMojBroj();	//zapocinje se igra Moj Broj
+			startSlagalica();
+			if(!isQuit) {
+				startMojBroj();	//zapocinje se igra Moj Broj
+			}
 			if(!isQuit) {
 				startQuiz();	//zapocinje se igra Kviz (Ko zna zna)
 			}
-			
 			socketCommunication.close();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -21,10 +21,10 @@ public class Server {
 				"Koje godine je pocela francuska revolucija?", "1789");
 		Questions pitanje3 = new Questions(new String[]{"Borislav Pekic", "Lav Tolstoj", "Irving Stoun", "Herman Hese"}, 
 				"Koji pisac je napisao knjigu \"Stepski vuk\"?", "Herman Hese");
-		Questions pitanje4 = new Questions(new String[]{"5", "2", "4", "6"}, 
-				"Za koliko razlicitih fudbalskih klubova je igrao Kristijano Ronaldo", "4");
+		//Questions pitanje4 = new Questions(new String[]{"5", "2", "4", "6"}, 
+				//"Za koliko razlicitih fudbalskih klubova je igrao Kristijano Ronaldo", "4");
 		Questions pitanje5 = new Questions(new String[] {"3","5","4","6"},
-				"Koliko NBA titula je osvojio Majkl Dzordan u toku svoje karijere?","6");
+				"Koliko NBA titula je u karijeri osvojio Majkl Dzordan?","6");
 		Questions pitanje6 = new Questions(new String[] {"Silvester Stalone", "Klint Istvud", "Arnold Svarceneger", "Brus Vilis"}, 
 				"Ko glumi glavnu ulogu u filmu \"Umri muski\"?", "Brus Vilis");
 		Questions pitanje7 = new Questions(new String[] {"Vodozemce","Sisare","Gmizavce","Ribe"},
@@ -36,7 +36,7 @@ public class Server {
 		Questions pitanje10 = new Questions(new String[] {"1000e", "500e", "100e", "2000e"},
 				"Najveca Euro novcanica je: ", "500e");
 		Questions pitanje11 = new Questions(new String[] {"velikog vezira", "pasaluk", "janjicara", "sultana"},
-				"Beglerbegluk je u Osmanskom carstvu bio drugi naziv za: ", "pasaluk");
+				"Beglerbegluk je u Osmanskom carstvu bio naziv za: ", "pasaluk");
 		Questions pitanje12 = new Questions(new String[] {"Models", "Hurricane", "Frajle", "Zana"},
 				"Pevacica Marija Mirkovic je bivsa clanica grupe: ", "Frajle");
 		Questions pitanje13 = new Questions(new String[] {"Uvac", "Rzav", "Djetinja", "Cetina"}, 
@@ -45,8 +45,8 @@ public class Server {
 				"U kom veku je Kolumbo otkrio Ameriku?", "15.");
 		Questions pitanje15 = new Questions(new String[] {"Baha", "Mocarta", "Betovena", "Cajkovskog"},
 				"\"Meseceva sonata\" je delo kompozitora: ", "Betovena");
-		Questions pitanje16 = new Questions(new String[] {"Kine", "Juzne Koreje", "Malezije", "Japana"},
-				"Zlatnu medalju u stonom tenisu na Olimpijadi 2004. je osvojio Ryu Seung-Min iz: ", "Juzne Koreje");
+		//Questions pitanje16 = new Questions(new String[] {"Kine", "Juzne Koreje", "Malezije", "Japana"},
+				//"Zlatnu medalju u stonom tenisu na Olimpijadi 2004. je osvojio Ryu Seung-Min iz: ", "Juzne Koreje");
 		Questions pitanje17 = new Questions(new String[] {"Zemlja Nomada", "Belfast", "Parazit", "Koda"},
 				"Oskar za najbolji film 2021. godine pripao je filmu: ", "Koda");
 		Questions pitanje18 = new Questions(new String[] {"Zvucnicima", "Usima", "Termoakumulacionoj", "Ogledalu"},
@@ -56,15 +56,15 @@ public class Server {
 		Questions pitanje20 = new Questions(new String[] {"20.", "18.", "16.", "19."},
 				"U kom veku je nastala muzika blues?", "19.");
 		Questions pitanje21 = new Questions(new String[] {"Miroslav Ilic", "Toma Zdravkovic", "Haris Dzinovic", "Saban Saulic"},
-				"Koji pevac narodne muzike se pojavljuje u filmu \"Bolje od bekstva\"?", "Toma Zdravkovic");
-		Questions pitanje22 = new Questions(new String[] {"Lerkari Fridiju", "Salvatoru Rini", "Al Kaponeu", "Lakiju Lucanu"},
-				"Pravo ime mu je Salvatore Lukanija. Bio je i osnivac mafijaske porodice Djenoveze. Rec je o: ", "Lakiju Lucanu");
-		questionsList.add(pitanje1); questionsList.add(pitanje2); questionsList.add(pitanje3); questionsList.add(pitanje4);
+				"Koji pevac se pojavljuje u filmu \"Bolje od bekstva\"?", "Toma Zdravkovic");
+		//Questions pitanje22 = new Questions(new String[] {"Lerkari Fridiju", "Salvatoru Rini", "Al Kaponeu", "Lakiju Lucanu"},
+				//"Pravo ime mu je Salvatore Lukanija. Bio je i osnivac mafijaske porodice Djenoveze. Rec je o: ", "Lakiju Lucanu");
+		questionsList.add(pitanje1); questionsList.add(pitanje2); questionsList.add(pitanje3); //questionsList.add(pitanje4);
 		questionsList.add(pitanje5); questionsList.add(pitanje6); questionsList.add(pitanje7); questionsList.add(pitanje8);
 		questionsList.add(pitanje9); questionsList.add(pitanje10); questionsList.add(pitanje11); questionsList.add(pitanje12);
-		questionsList.add(pitanje13); questionsList.add(pitanje14); questionsList.add(pitanje15); questionsList.add(pitanje16);
+		questionsList.add(pitanje13); questionsList.add(pitanje14); questionsList.add(pitanje15); //questionsList.add(pitanje16);
 		questionsList.add(pitanje17); questionsList.add(pitanje18); questionsList.add(pitanje19); questionsList.add(pitanje20);
-		questionsList.add(pitanje21); questionsList.add(pitanje22);
+		questionsList.add(pitanje21); //questionsList.add(pitanje22);
 	}
 	public static String generateCode() {
 		String code;

@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.Random;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import slagalicaClasses.Rec;
 import mojbrojClasses.MyNumbers;
 import quizClasses.Questions;
 
@@ -24,6 +25,12 @@ public class ClientHandler extends Thread {
 	private boolean isPaired = false;	//promenljiva koja odredjuje da li je klijentu dodeljen njegov par (protivnik)
 	private String code; //promenljiva koja predstavlja generisan kod sobe kojoj kojoj je igrac pristupio (ukoliko je preko koda)
 	
+	//ATRIBUTI ZA IGRU SLAGALICA
+	private Rec rec;	//random slova koji se dodeljuju igracu u igri
+	private boolean isSlagalicaPlayed = false;
+	private boolean isSlagalicaPlayedOfPair = false;
+	private String slagalicaFinishedWord;	//razlika izmedju dobijenog i trazenog broja ovog igraca u igri Moj Broj
+	private String slagalicaFinishedWordOfPair;
 	//ATRIBUTI ZA IGRU MOJ BROJ
 	private MyNumbers myNumbers;	//random brojevi koji se dodeljuju igracu u igri
 	private boolean isMojBrojPlayed = false;
@@ -36,7 +43,6 @@ public class ClientHandler extends Thread {
 	private boolean isQuestionAnsweredOfPair = false;
 	private String isCorrectAnswer;
 	private String isCorrectAnswerOfPair;
-	
 	
 	ClientHandler(Socket socketCommunication) {
 		this.socketCommunication = socketCommunication;
@@ -95,7 +101,9 @@ public class ClientHandler extends Thread {
 					this.pair = client;
 					pair.isPaired = true;
 					this.isPaired = true;
-					//dodeljuju se suparnicima isti brojevi i ista pitanja za igre
+					//dodeljuju se suparnicima ista slova, isti brojevi i ista pitanja za igre
+					rec = new Rec();
+					pair.rec = this.rec;
 					myNumbers = new MyNumbers();
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
@@ -132,7 +140,9 @@ public class ClientHandler extends Thread {
 					this.pair = client;
 					pair.isPaired = true;
 					this.isPaired = true;
-					//dodeljuju se suparnicima isti brojevi i ista pitanja za igre
+					//dodeljuju se suparnicima ista slova, isti brojevi i ista pitanja za igre
+					rec = new Rec();
+					pair.rec = this.rec;
 					myNumbers = new MyNumbers();
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
@@ -207,6 +217,57 @@ public class ClientHandler extends Thread {
 			setIsQuit(true);
 			return;
 		}
+	}
+	private void startSlagalica() throws IOException, InterruptedException {
+		clientOutput.println(rec.getRec());	//klijentu se salju random izgenerisana slova za igru
+		String message = clientInput.readLine();	//cita se poruka od klijenta u kojoj bi trebalo da se nalazi rezultat igre slagalica, tj. dobijena rec
+		if(message.equals("EXIT")) {
+			setIsQuit(true);
+			pair.setIsQuit(true);
+			if(pair.isSlagalicaPlayed) {
+				synchronized(waiterPair) {
+					waiterPair.notify();
+				}
+			}
+			return;
+		}
+		if(isQuit) {
+			clientOutput.println("Protivnik je napustio igru.");	//klijent se obavestava da je protivnik napustio igru
+			return;
+		}
+		slagalicaFinishedWord = message;
+		isSlagalicaPlayed = true;
+		if(pair.isSlagalicaPlayed) {
+			synchronized(waiterPair) {
+				pair.slagalicaFinishedWordOfPair = slagalicaFinishedWord;
+				pair.isSlagalicaPlayedOfPair = isSlagalicaPlayed;
+				slagalicaFinishedWordOfPair = pair.slagalicaFinishedWord;
+				isSlagalicaPlayedOfPair = pair.isSlagalicaPlayed;
+				waiterPair.notify();
+				//instanca ce se naci u ovom slucaju ukoliko je njena odgovarajuca instanca Client klase druga zavrsila igru
+				//zato obavestava svog para (tj. povezanu instancu ClientHandler klase, tj. pair (atribut ove klase)) da je i on zavrsio
+			}
+		} else {
+			while(!isSlagalicaPlayedOfPair) {
+				synchronized(waiterPair) {
+					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je protivnik isto zavrsio igru
+				}
+				if(isQuit) {
+					clientOutput.println("Protivnik je napustio igru.");
+					return;
+				}
+			}
+		}
+		//ClientHandler salje svom Clientu poruku o tome koji je ishod igre u zavisnosti od dobijenih rezultata igraca
+		if(slagalicaFinishedWord.length() > slagalicaFinishedWordOfPair.length()) {
+			clientOutput.println(slagalicaFinishedWord.length());
+		} else if(slagalicaFinishedWord.length() < slagalicaFinishedWordOfPair.length()) {
+			clientOutput.println((slagalicaFinishedWordOfPair.length()*-1));
+		} else if(slagalicaFinishedWord.length() == 0 && slagalicaFinishedWordOfPair.length() == 0) {
+			clientOutput.println("Oba igraca bez bodova!");
+		} else {
+			clientOutput.println((slagalicaFinishedWordOfPair.length()+100));
+		} 
 	}
 	private void writeMyNumbersJson() {
 		JSONObject objectJson = new JSONObject();
@@ -360,12 +421,14 @@ public class ClientHandler extends Thread {
 			setUsername();
 			pairing();
 			if(!isQuit) {
+				startSlagalica();
+			}
+			if(!isQuit) {
 				startMojBroj();
 			}
 			if(!isQuit) {
 				startQuiz();
 			}
-			
 			finish();
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
