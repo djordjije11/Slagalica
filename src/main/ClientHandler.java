@@ -1,6 +1,7 @@
 package main;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -9,6 +10,9 @@ import java.util.LinkedList;
 import java.util.Random;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import slagalicaClasses.Rec;
 import mojbrojClasses.MyNumbers;
 import quizClasses.Questions;
@@ -43,6 +47,9 @@ public class ClientHandler extends Thread {
 	private boolean isQuestionAnsweredOfPair = false;
 	private String isCorrectAnswer;
 	private String isCorrectAnswerOfPair;
+	//ATRIBUTI ZA IGRU ASOCIJACIJE
+	private JSONObject asocijacijaPolja;
+	private boolean indikator = false;
 	
 	ClientHandler(Socket socketCommunication) {
 		this.socketCommunication = socketCommunication;
@@ -92,7 +99,7 @@ public class ClientHandler extends Thread {
 		Server.onlineUsers.add(this);	//dodaje se listi aktivnih usera trenutni klijent
 		clientOutput.println("Dobrodosli " + username + "!");
 	}
-	private void pairRandom() throws InterruptedException {
+	private void pairRandom() throws IOException, InterruptedException, ParseException {
 		synchronized(waiterPair) {
 			for (ClientHandler client : Server.onlineUsers) {
 				if(client != this && client.isPaired == false && waiterPair == client.waiterPair) {
@@ -108,6 +115,8 @@ public class ClientHandler extends Thread {
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
 					pair.nizPitanja = this.nizPitanja;
+					asocijacijaPolja = ucitajRandomAsocijaciju();
+					pair.asocijacijaPolja = this.asocijacijaPolja;
 					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
 					/*
 					 *
@@ -128,7 +137,7 @@ public class ClientHandler extends Thread {
 		}
 		clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 	}
-	private void pairByCode() throws IOException, InterruptedException {	
+	private void pairByCode() throws IOException, InterruptedException, ParseException {	
 		for (ClientHandler client : Server.onlineUsers) {
 			if(client != this && client.isPaired == false && code.equals(client.code)) {
 				//instanci se dodeljuje WaitMonitor objekat koji ima instanca koja ima i isti kod, kako bi se niti sinhronizovale
@@ -147,6 +156,8 @@ public class ClientHandler extends Thread {
 					pair.myNumbers = this.myNumbers;
 					nizPitanja = getRandomQuestions();
 					pair.nizPitanja = this.nizPitanja;
+					asocijacijaPolja = ucitajRandomAsocijaciju();
+					pair.asocijacijaPolja = this.asocijacijaPolja;
 					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
 					code = null; client.code = null;	//kod kojim su klijenti povezani im vise nije potreban
 					break;
@@ -155,7 +166,7 @@ public class ClientHandler extends Thread {
 		}
 		clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 	}
-	private void pairing() throws IOException, InterruptedException {
+	private void pairing() throws IOException, InterruptedException, ParseException {
 		String key = clientInput.readLine();	//cita se od klijenta uneta opcija za povezivanje sa drugim igracem 
 		switch (key) {
 		//OPCIJA NASUMICNOG POVEZIVANJA
@@ -397,6 +408,18 @@ public class ClientHandler extends Thread {
 			i++;
 		} while(i < 5);	//ponavlja se 5 puta jer igra sadrzi 5 pitanja, dakle 5 poteza
 	}
+	private JSONObject ucitajRandomAsocijaciju() throws IOException, ParseException {
+		JSONParser jsonparser = new JSONParser();
+		JSONObject randomAsocijacija = null;
+		FileReader fr = new FileReader("baza\\asocijacije.json");
+		JSONObject jsonObjekat = (JSONObject) jsonparser.parse(fr);
+		JSONArray nizAsocijacije = (JSONArray) jsonObjekat.get("Asocijacije");
+		randomAsocijacija = (JSONObject) nizAsocijacije.get(new Random().nextInt(nizAsocijacije.size()));
+		fr.close();
+		return randomAsocijacija;
+	}
+	
+	
 	private void finish() {
 		isQuit = true;
 		if(waiterPair != null) { 
@@ -429,6 +452,7 @@ public class ClientHandler extends Thread {
 			if(!isQuit) {
 				startQuiz();
 			}
+			
 			finish();
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
@@ -436,6 +460,9 @@ public class ClientHandler extends Thread {
 			finish();
 			System.out.println("Konekcija zatvorena.");
 		} catch (InterruptedException e) {
+			finish();
+			e.printStackTrace();
+		} catch (ParseException e) {
 			finish();
 			e.printStackTrace();
 		}

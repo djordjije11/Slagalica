@@ -184,6 +184,11 @@ public class Client {
 		scoresOfPair = quizGUI.getScoresOfPair();	//cuvaju se bodovi protivnika sa kraja igre kako bi se preneli u sledecu igru
 	}
 	
+	
+	private static void gameOver() {
+		new GameOver(username, usernameOfPair, scores, scoresOfPair);
+	}
+	
 	public static void main(String[] args) {
 		//String ip = "192.168.0.18";
 		String ip = "localhost";
@@ -201,6 +206,9 @@ public class Client {
 			}
 			if(!isQuit) {
 				startQuiz();	//zapocinje se igra Kviz (Ko zna zna)
+			}
+			if(!isQuit) {
+				gameOver();
 			}
 			socketCommunication.close();
 		} catch (IOException e) {

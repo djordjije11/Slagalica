@@ -137,13 +137,13 @@ public class Quiz extends Gui implements ActionListener {
 			setPitanje();
 		} else {
 			isOver = true;
-			//dispose();
+			dispose();
 		}
 	}
 	public Quiz(Questions[] pitanjaNiz, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
 		super(waiter, username, usernameOfPair, score, pairScore, serverOutput);
 		this.pitanjaNiz = pitanjaNiz;
-        this.setTitle("Quiz");
+        this.setTitle("Kviz (Ko zna zna)");
         initializePitanje();
         initializeNextButton();
         
