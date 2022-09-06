@@ -2,26 +2,34 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Socket;
 
 public class ExitThread extends Thread {
 
 	private BufferedReader clientInput = null;
-	private Socket socketCommunication = null;
 	private WaitMonitor waiter;
 	private ClientHandler client;
 	
-	public ExitThread(WaitMonitor waiter, ClientHandler client, Socket socketCommunication) {
+	public ExitThread(WaitMonitor waiter, ClientHandler client, BufferedReader clientInput) {
 		this.waiter = waiter;
 		this.client = client;
-		this.socketCommunication = socketCommunication;
+		this.clientInput = clientInput;
 	}
 	
 	@Override
 	public void run() {
 		try {
-			clientInput = new BufferedReader(new InputStreamReader(socketCommunication.getInputStream()));
+			/*
+			String line;
+			while((line = clientInput.readLine()) == null || (line != null && !line.equals("EXIT"))) {
+				if(interrupted()) {
+					return;
+				}
+			}
+			client.setIsQuit(true);
+			synchronized(waiter) {
+				waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
+			}
+			*/
 			while(!clientInput.ready()) {
 				if(interrupted()) {
 					return;
@@ -34,7 +42,10 @@ public class ExitThread extends Thread {
 				}
 			}
 		} catch(IOException e) {
-			e.printStackTrace();
+			client.setIsQuit(true);
+			synchronized(waiter) {
+				waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
+			}
 		}
 	}
 }

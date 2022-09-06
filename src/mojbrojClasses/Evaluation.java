@@ -25,13 +25,6 @@ public class Evaluation {
                 return x;
             }
 
-            // Grammar:
-            // expression = term | expression `+` term | expression `-` term
-            // term = factor | term `*` factor | term `/` factor
-            // factor = `+` factor | `-` factor | `(` expression `)` | number
-            //        | functionName `(` expression `)` | functionName factor
-            //        | factor `^` factor
-
             double parseExpression() {
                 double x = parseTerm();
                 for (;;) {
@@ -71,16 +64,9 @@ public class Evaluation {
                     } else {
                         x = parseFactor();
                     }
-                    if (func.equals("sqrt")) x = Math.sqrt(x);
-                    else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
-                    else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
-                    else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
-                    else throw new RuntimeException("Unknown function: " + func);
                 } else {
                     throw new RuntimeException("Unexpected: " + (char)ch);
                 }
-
-                if (eat('^')) x = Math.pow(x, parseFactor()); // exponentiation
 
                 return x;
             }

@@ -30,6 +30,13 @@ public class Username extends JFrame implements ActionListener {
 			sendButton.setEnabled(true);
 		} else {
 			label2.setText(text);
+			textField.setEnabled(false);
+			sendButton.setEnabled(false);
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			this.dispose();
 		}
 	}

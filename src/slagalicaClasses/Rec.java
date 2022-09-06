@@ -26,7 +26,7 @@ public class Rec {
 	public Rec() {
 		rec = "";
 		for (int i = 0; i < 12; i++) {
-				rec = rec + izbaciSlovo();
+			rec = rec + izbaciSlovo();
 		}
 	}
 }
