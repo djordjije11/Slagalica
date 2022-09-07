@@ -102,13 +102,14 @@ public class Pairing extends JFrame implements ActionListener {
 		this.add(codeArea);
 		this.add(sendCodeButton);
 		
+		/*
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) {
 				serverOutput.println("EXIT");
 				System.exit(0);
 			}
 		});
-		
+		*/
 		this.setVisible(true);
 	}
 	

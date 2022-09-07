@@ -31,6 +31,15 @@ public class Client {
 	private static int scores = 0;
 	private static int scoresOfPair = 0;
 	
+	
+	private static void checkIfExit(String input) {
+		if(input.equals("Protivnik je napustio igru.")) {
+			isQuit = true;
+			serverOutput.println("finish ExitThread");
+			return;
+		}
+		serverOutput.println("finish ExitThread");
+	}
 	private static void setUsername() throws IOException, InterruptedException {
 		String input;
 		usernameGUI = new Username(waiter);
@@ -58,9 +67,16 @@ public class Client {
 		switch (key) {
 		//OPCIJA NASUMICNOG POVEZIVANJA
 		case 'R': {
-			usernameOfPair = serverInput.readLine();	//cita se od servera username protivnika koji je ovom igracu dodeljen
-			pairingGUI.setPairLabel(usernameOfPair);
-			break;
+			String input = serverInput.readLine();	//cita se od servera username protivnika koji je ovom igracu dodeljen
+			if(input.startsWith("#")) {
+				usernameOfPair = input.substring(1);
+				pairingGUI.setPairLabel(usernameOfPair);
+				serverOutput.println("finish ExitThread");
+			} else {
+				usernameOfPair = input;
+				pairingGUI.setPairLabel(usernameOfPair);
+			}
+			return;
 		}
 		//OPCIJA OTVARANJA SOBE I GENERISANJA KODA
 		case 'G': {
@@ -68,7 +84,8 @@ public class Client {
 			pairingGUI.setCode(code);
 			usernameOfPair = serverInput.readLine();	//cita se od servera username protivnika koji je ovom igracu dodeljen
 			pairingGUI.setPairLabel(usernameOfPair);
-			break;
+			serverOutput.println("finish ExitThread");
+			return;
 		}
 		//OPCIJA PRISTUPANJA SOBI PUTEM KODA
 		case 'P': {
@@ -88,7 +105,7 @@ public class Client {
 					break;
 				}
 			}
-			break;
+			return;
 		}
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + key);
@@ -103,10 +120,7 @@ public class Client {
 		serverOutput.println(slagalicaGUI.getFinishedRec());	//serveru se salje rezultat igraca, tj razlika izmedju trazenog broja i dobijenog
 		input = serverInput.readLine();	//cita se povratna informacija od servera o tome kako je i protivnik odigrao u odnosu na igraca
 		slagalicaGUI.setMessageLabel(input);	//na osnovu serverove poruke dodeljuju se bodovi igracima
-		if(input.equals("Protivnik je napustio igru.")) {
-			isQuit = true;
-			return;
-		}
+		checkIfExit(input);	if(isQuit) return;
 		scores = slagalicaGUI.getScores();	//cuvaju se bodovi igraca sa kraja igre kako bi se preneli u sledecu igru
 		scoresOfPair = slagalicaGUI.getScoresOfPair();	//cuvaju se bodovi protivnika sa kraja igre kako bi se preneli u sledecu igru
 	}
@@ -138,10 +152,7 @@ public class Client {
 		serverOutput.println(Integer.toString(mojbrojGUI.getFinishedNumber()));	//serveru se salje rezultat igraca, tj razlika izmedju trazenog broja i dobijenog
 		input = serverInput.readLine();	//cita se povratna informacija od servera o tome kako je i protivnik odigrao u odnosu na igraca
 		mojbrojGUI.setMessageLabel(input);	//na osnovu serverove poruke dodeljuju se bodovi igracima
-		if(input.equals("Protivnik je napustio igru.")) {
-			isQuit = true;
-			return;
-		}
+		checkIfExit(input);	if(isQuit) return;
 		scores = mojbrojGUI.getScores();	//cuvaju se bodovi igraca sa kraja igre kako bi se preneli u sledecu igru
 		scoresOfPair = mojbrojGUI.getScoresOfPair();	//cuvaju se bodovi protivnika sa kraja igre kako bi se preneli u sledecu igru
 	}
@@ -174,10 +185,7 @@ public class Client {
 			serverOutput.println(quizGUI.getIsCorrect());	//serveru se salje da li je igrac odgovorio tacno na pitanje ili ne, ili ga je preskocio
 			input = serverInput.readLine();	//cita se povratna informacija od servera o tome kako je i protivnik odigrao u odnosu na igraca
 			quizGUI.setMessage(input);	//na osnovu serverove poruke dodeljuju se bodovi igracima
-			if(input.equals("Protivnik je napustio igru.")) {
-				isQuit = true;
-				return;
-			}
+			checkIfExit(input); if(isQuit) break;
 			i++;
 		} while (i < 5);	//ponavlja se 5 puta jer igra sadrzi 5 pitanja, dakle 5 poteza
 		scores = quizGUI.getScores();	//cuvaju se bodovi igraca sa kraja igre kako bi se preneli u sledecu igru

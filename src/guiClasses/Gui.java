@@ -56,11 +56,13 @@ public class Gui extends JFrame {
         this.setLayout(null);
         initializeScoreLabels();
         
+        /*
         this.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) {
 				serverOutput.println("EXIT");
 				System.exit(0);
 			}
 		});
+		*/
 	}
 }

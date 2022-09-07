@@ -82,7 +82,7 @@ public class Username extends JFrame implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == sendButton) {
 			String text = textField.getText();
-			if(text == null || text.contains(" ") || !text.matches(".*[a-zA-Z]+.*")) {
+			if(text == null || text.startsWith("#") || text.contains(" ") || !text.matches(".*[a-zA-Z]+.*")) {
 				textField.setText("");
 				label2.setText("Uneti username je neadekvatan. Pokusaj opet!");
 			} else {

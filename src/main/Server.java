@@ -99,6 +99,7 @@ public class Server {
 				client.start();	//pokrece se nova nit ClientHandler klase za svakog klijenta, kako bi ta nit sa serverske strane hendlovala klijenta
 			}
 		} catch (IOException e) {
+			System.out.println("SERVER PAO!");
 			e.printStackTrace();
 		}
 	}

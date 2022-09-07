@@ -118,6 +118,7 @@ public class ClientHandler extends Thread {
 					pair.questionsArray = this.questionsArray;
 					asocijacijaPolja = ucitajRandomAsocijaciju();
 					pair.asocijacijaPolja = this.asocijacijaPolja;
+					waiterPair.paired = true;
 					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
 					/*
 					 *
@@ -132,11 +133,17 @@ public class ClientHandler extends Thread {
 			synchronized(waiterPair) {
 				waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je instanca povezana ili da je klijent napustio igru
 			}
+			/*
 			if(isQuit == false) {
 				exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
 			} else return;
+			*/
+			if(isQuit) return;
+			clientOutput.println("#" + pair.username);	//klijentu se salje username njegovog para, protivnika
+			if(exit.isAlive()) exit.join();
+		} else {
+			clientOutput.println(pair.username);
 		}
-		clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 	}
 	private void pairByCode() throws IOException, InterruptedException, ParseException {	
 		for (ClientHandler client : Server.onlineUsers) {
@@ -199,12 +206,10 @@ public class ClientHandler extends Thread {
 				synchronized(waiterPair) {
 					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je instanca povezana ili da je klijent napustio igru
 				}
-				if(isQuit == false) {
-					exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
-				}
-				else return;
+				if(isQuit) return;
+				clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
+				if(exit.isAlive()) exit.join();
 			}
-			clientOutput.println(pair.username);	//klijentu se salje username njegovog para, protivnika
 			return;
 		}
 		//OPCIJA PRISTUPANJA SOBI PUTEM KODA
@@ -233,24 +238,17 @@ public class ClientHandler extends Thread {
 	private void startSlagalica() throws IOException, InterruptedException {
 		clientOutput.println(rec.getRec());	//klijentu se salju random izgenerisana slova za igru
 		String message = clientInput.readLine();	//cita se poruka od klijenta u kojoj bi trebalo da se nalazi rezultat igre slagalica, tj. dobijena rec
-		if(message.equals("EXIT")) {
-			setIsQuit(true);
-			pair.setIsQuit(true);
-			if(pair.isSlagalicaPlayed) {
-				synchronized(waiterPair) {
-					waiterPair.notify();
-				}
-			}
-			return;
-		}
 		synchronized(this) {
 			if(isQuit) {
 				clientOutput.println("Protivnik je napustio igru.");	//klijent se obavestava da je protivnik napustio igru
+				clientInput.readLine();
 				return;
 			}
 		}
 		slagalicaFinishedWord = message;
 		isSlagalicaPlayed = true;
+		ExitThread exit = new ExitThread(waiterPair, this, clientInput);
+		exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 		if(pair.isSlagalicaPlayed) {
 			synchronized(waiterPair) {
 				pair.slagalicaFinishedWordOfPair = slagalicaFinishedWord;
@@ -263,17 +261,17 @@ public class ClientHandler extends Thread {
 			}
 		} else {
 			while(!isSlagalicaPlayedOfPair) {
-				ExitThread exit = new ExitThread(waiterPair, this, clientInput);
-				exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 				synchronized(waiterPair) {
 					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je protivnik isto zavrsio igru
 				}
 				if(isQuit) {
-					if(pair != null) pair.setIsQuit(true);
-					clientOutput.println("Protivnik je napustio igru.");
-					return;
-				} else {
-					exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
+					if(exit.getIsExit()) {
+						return;
+					} else {
+						clientOutput.println("Protivnik je napustio igru.");
+						if(exit.isAlive()) exit.join();
+						return;
+					}
 				}
 			}
 		}
@@ -286,7 +284,8 @@ public class ClientHandler extends Thread {
 			clientOutput.println("Oba igraca bez bodova!");
 		} else {
 			clientOutput.println((slagalicaFinishedWordOfPair.length()+100));
-		} 
+		}
+		if(exit.isAlive()) exit.join();
 	}
 	private void writeMyNumbersJson() {
 		JSONObject objectJson = new JSONObject();
@@ -303,24 +302,17 @@ public class ClientHandler extends Thread {
 	private void startMojBroj() throws IOException, InterruptedException {
 		writeMyNumbersJson();	//klijentu se salju random izgenerisani brojevi za igru
 		String message = clientInput.readLine();	//cita se poruka od klijenta u kojoj bi trebalo da se nalazi rezultat igre moj broj, tj. razlika izmedju trazenog i dobijenog broja
-		if(message.equals("EXIT")) {
-			setIsQuit(true);
-			pair.setIsQuit(true);
-			if(pair.isMojBrojPlayed) {
-				synchronized(waiterPair) {
-					waiterPair.notify();
-				}
-			}
-			return;
-		}
 		synchronized(this) {
 			if(isQuit) {
 				clientOutput.println("Protivnik je napustio igru.");	//klijent se obavestava da je protivnik napustio igru
+				clientInput.readLine();
 				return;
 			}
 		}
 		mojBrojFinishedNumber = Integer.parseInt(message);
 		isMojBrojPlayed = true;
+		ExitThread exit = new ExitThread(waiterPair, this, clientInput);
+		exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 		if(pair.isMojBrojPlayed) {
 			synchronized(waiterPair) {
 				pair.mojBrojFinishedNumberOfPair = mojBrojFinishedNumber;
@@ -333,16 +325,17 @@ public class ClientHandler extends Thread {
 			}
 		} else {
 			while(!isMojBrojPlayedOfPair) {
-				ExitThread exit = new ExitThread(waiterPair, this, clientInput);
-				exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 				synchronized(waiterPair) {
 					waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je protivnik isto zavrsio igru
 				}
 				if(isQuit) {
-					clientOutput.println("Protivnik je napustio igru.");
-					return;
-				} else {
-					exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
+					if(exit.getIsExit()) {
+						return;
+					} else {
+						clientOutput.println("Protivnik je napustio igru.");
+						if(exit.isAlive()) exit.join();
+						return;
+					}
 				}
 			}
 		}
@@ -355,7 +348,8 @@ public class ClientHandler extends Thread {
 			clientOutput.println("Oba igraca bez bodova!");
 		} else {
 			clientOutput.println("Nereseno!");
-		} 
+		}
+		if(exit.isAlive()) exit.join();
 	}
 	private JSONArray initializeAnswersJSON(Questions pitanje) {
 		JSONArray answers = new JSONArray();
@@ -384,22 +378,17 @@ public class ClientHandler extends Thread {
 		int i = 0;
 		do {
 			input = clientInput.readLine();	//cita se od klijenta poruka da li je odgovorio tacno ili mozda napustio igru
-			if(input.equals("EXIT")) {
-				setIsQuit(true);
-				pair.setIsQuit(true);
-				synchronized(waiterPair) {
-					waiterPair.notify();	//obavestava se par da je klijent napustio igru
-				}
-				return;
-			}
 			synchronized(this) {
 				if(isQuit) {
-					clientOutput.println("Protivnik je napustio igru.");	//obavestava se klijent da je par napustio igru
+					clientOutput.println("Protivnik je napustio igru.");	//klijent se obavestava da je protivnik napustio igru
+					clientInput.readLine();
 					return;
 				}
 			}
 			isCorrectAnswer = input;
 			isQuestionAnswered = true;
+			ExitThread exit = new ExitThread(waiterPair, this, clientInput);
+			exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 			if(pair.isQuestionAnswered) {
 				synchronized(waiterPair) {
 					pair.isCorrectAnswerOfPair = this.isCorrectAnswer;
@@ -409,21 +398,23 @@ public class ClientHandler extends Thread {
 				}
 			} else {
 				while(!isQuestionAnsweredOfPair) {
-					ExitThread exit = new ExitThread(waiterPair, this, clientInput);
-					exit.start();	//pokrece se nit koja osluskuje da li je klijent napustio igru
 					synchronized(waiterPair) {
-						waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je i protivnik odigrao potez ili mozda napustio igru
+						waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je protivnik isto zavrsio igru
 					}
 					if(isQuit) {
-						clientOutput.println("Protivnik je napustio igru.");
-						return;
-					} else {
-						exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
+						if(exit.getIsExit()) {
+							return;
+						} else {
+							clientOutput.println("Protivnik je napustio igru.");
+							if(exit.isAlive()) exit.join();
+							return;
+						}
 					}
 				}
 			}
 			String key = isCorrectAnswer + "-" + isCorrectAnswerOfPair;
 			clientOutput.println(key);	//klijentu se salje ishod poteza u zavisnosti od odgovora igraca
+			if(exit.isAlive()) exit.join();
 			isQuestionAnswered = false; isCorrectAnswer = null; isQuestionAnsweredOfPair = false; isCorrectAnswerOfPair = null;
 			i++;
 		} while(i < 5);	//ponavlja se 5 puta jer igra sadrzi 5 pitanja, dakle 5 poteza
@@ -440,17 +431,29 @@ public class ClientHandler extends Thread {
 	}
 	
 	
+	private void pairQuit() {
+		if(pair != null) pair.setIsQuit(true);
+	}
 	private void finish() {
 		isQuit = true;
-		if(pair != null) pair.setIsQuit(true);
 		if(waiterPair != null) { 
 			waiterPair.removeConnection();
+			//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
+			synchronized(Server.waitersPair) {
+				if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
+					Server.waitersPair.remove(waiterPair);
+				}
+			}
+			waiterPair = null;
 		}
-		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
-		if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
-			Server.waitersPair.remove(waiterPair);
+		if(code != null) {
+			synchronized(Server.codesList) {
+				if(Server.codesList.contains(code)) {
+					Server.codesList.remove(code);
+				}
+			}
+			code = null;
 		}
-		waiterPair = null;
 		if(username != null) {
 			Server.onlineUsers.remove(this);
 		}
@@ -478,16 +481,17 @@ public class ClientHandler extends Thread {
 				startQuiz();
 			}
 			
+			pairQuit();
 			finish();
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
 		} catch (IOException e) {
-			/*
-			if(pair != null) pair.setIsQuit(true);
-			synchronized(waiterPair) {
-				waiterPair.notify();
+			pairQuit();
+			if(waiterPair != null && waiterPair.paired) {
+				synchronized(waiterPair) {
+					waiterPair.notify();
+				}
 			}
-			*/
 			finish();
 			System.out.println("Konekcija zatvorena.");
 		} catch (InterruptedException e) {
