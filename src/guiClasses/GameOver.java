@@ -15,7 +15,6 @@ public class GameOver extends JFrame implements ActionListener {
 
 	private JButton playAgainButton;
 	private WaitMonitor waiter;
-	private boolean isGameValid;
 	
 	public GameOver(WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair, boolean isGameValid) {
 		this.waiter = waiter;

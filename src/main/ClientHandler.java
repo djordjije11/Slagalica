@@ -134,11 +134,6 @@ public class ClientHandler extends Thread {
 			synchronized(waiterPair) {
 				waiterPair.wait();	//ova nit ce stajati dok ne primi obavestenje da je instanca povezana ili da je klijent napustio igru
 			}
-			/*
-			if(isQuit == false) {
-				exit.interrupt();	//ukoliko je klijent povezan i nije napustio igru, exit nit se zatvara
-			} else return;
-			*/
 			if(isQuit) return;
 			clientOutput.println("#" + pair.username);	//klijentu se salje username njegovog para, protivnika
 			if(exit.isAlive()) exit.join();

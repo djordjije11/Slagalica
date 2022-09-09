@@ -61,7 +61,7 @@ public class Client {
 		username = usernameGUI.getUsername();	//ukoliko je prosao sve provere, username se dodeljuje klijentu
 	}
 	private static void pair() throws IOException, InterruptedException {
-		pairingGUI = new Pairing(waiter, username, serverOutput);
+		pairingGUI = new Pairing(waiter, username);
 		synchronized(waiter) {
 			waiter.wait();	//ova nit ce stajati dok klijent ne odabere opciju za povezivanje sa drugim igracem
 		}

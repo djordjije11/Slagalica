@@ -40,7 +40,6 @@ public class Gui extends JFrame {
 		pairScore += numberForPair;
 		updateScoreLabels();
 	}
-	
 	public Gui(WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
 		this.waiter = waiter;
 		this.username = username;
@@ -55,13 +54,5 @@ public class Gui extends JFrame {
         this.setResizable(false);
         this.setLayout(null);
         initializeScoreLabels();
-        /*
-        this.addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent e) {
-				serverOutput.println("EXIT");
-				System.exit(0);
-			}
-		});
-		*/
 	}
 }

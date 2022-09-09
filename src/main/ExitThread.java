@@ -27,33 +27,6 @@ public class ExitThread extends Thread {
 		try {
 			System.out.println(a + ". EXIT Nit se pokrenula");
 			clientInput.readLine();
-			
-			
-			/*
-			String line;
-			while((line = clientInput.readLine()) == null || (line != null && !line.equals("EXIT"))) {
-				if(interrupted()) {
-					return;
-				}
-			}
-			client.setIsQuit(true);
-			synchronized(waiter) {
-				waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
-			}
-			*/
-			/*
-			while(!clientInput.ready()) {
-				if(interrupted()) {
-					return;
-				}
-			}
-			if(clientInput.readLine().equals("EXIT")) {
-				client.setIsQuit(true);
-				synchronized(waiter) {
-					waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
-				}
-			}
-			*/
 			System.out.println(a + ". EXIT Nit se zavrsila");
 		} catch(IOException e) {
 			isExit = true;
