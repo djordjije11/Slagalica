@@ -51,17 +51,11 @@ public class MojBroj extends Gui implements ActionListener {
     	return finishedNumber;
     }
     public void setMessageLabel(String text) {
-    	if(text.equals("Protivnik je napustio igru.")) {
-    		messageLabel.setText(text);
-    		return;
-    	}
     	if(text.equals("Pobedili ste!")) {
     		addScores(20, 0);
     	} else if(text.equals("Izgubili ste!")) {
     		addScores(0, 20);
-    	} else if(text.equals("Oba igraca bez bodova!")) {
-    		//igraci ne dobijaju bodove
-    	} else {
+    	} else if(text.equals("Nereseno!")) {
     		//igraci dobili isti broj
     		addScores(10, 10);
     	}

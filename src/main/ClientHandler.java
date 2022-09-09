@@ -24,6 +24,7 @@ public class ClientHandler extends Thread {
 	
 	private String username;
 	private boolean isQuit = false;	//promenljiva koja odredjuje da li klijent zavrsava igru
+	private boolean askToPlayAgain = true;	//true ako je protivnik napustio igru
 	private ClientHandler pair;	//promenljiva koja referencira ClientHandler instancu koja predstavlja igraca koji je par ovom igracu (ovoj instanci)
 	private boolean isPaired = false;	//promenljiva koja odredjuje da li je klijentu dodeljen njegov par (protivnik)
 	private String code; //promenljiva koja predstavlja generisan kod sobe kojoj kojoj je igrac pristupio (ukoliko je preko koda)
@@ -146,29 +147,32 @@ public class ClientHandler extends Thread {
 		}
 	}
 	private void pairByCode() throws IOException, InterruptedException, ParseException {	
-		for (ClientHandler client : Server.onlineUsers) {
-			if(client != this && client.isPaired == false && code.equals(client.code)) {
-				//instanci se dodeljuje WaitMonitor objekat koji ima instanca koja ima i isti kod, kako bi se niti sinhronizovale
-				this.waiterPair = client.waiterPair;
-				waiterPair.addConnection();
-				Server.waitersPair.add(waiterPair);
-				synchronized(waiterPair) {
-					client.pair = this;
-					this.pair = client;
-					pair.isPaired = true;
-					this.isPaired = true;
-					//dodeljuju se suparnicima ista slova, isti brojevi i ista pitanja za igre
-					rec = new Rec();
-					pair.rec = this.rec;
-					myNumbers = new MyNumbers();
-					pair.myNumbers = this.myNumbers;
-					questionsArray = getRandomQuestions();
-					pair.questionsArray = this.questionsArray;
-					asocijacijaPolja = ucitajRandomAsocijaciju();
-					pair.asocijacijaPolja = this.asocijacijaPolja;
-					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
-					code = null; client.code = null;	//kod kojim su klijenti povezani im vise nije potreban
-					break;
+		synchronized(Server.onlineUsers) {
+			for (ClientHandler client : Server.onlineUsers) {
+				if(client != this && client.isPaired == false && code.equals(client.code)) {
+					//instanci se dodeljuje WaitMonitor objekat koji ima instanca koja ima i isti kod, kako bi se niti sinhronizovale
+					this.waiterPair = client.waiterPair;
+					waiterPair.addConnection();
+					Server.waitersPair.add(waiterPair);
+					synchronized(waiterPair) {
+						client.pair = this;
+						this.pair = client;
+						pair.isPaired = true;
+						this.isPaired = true;
+						//dodeljuju se suparnicima ista slova, isti brojevi i ista pitanja za igre
+						rec = new Rec();
+						pair.rec = this.rec;
+						myNumbers = new MyNumbers();
+						pair.myNumbers = this.myNumbers;
+						questionsArray = getRandomQuestions();
+						pair.questionsArray = this.questionsArray;
+						asocijacijaPolja = ucitajRandomAsocijaciju();
+						pair.asocijacijaPolja = this.asocijacijaPolja;
+						waiterPair.paired = true;
+						waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
+						code = null; client.code = null;	//kod kojim su klijenti povezani im vise nije potreban
+						break;
+					}
 				}
 			}
 		}
@@ -179,13 +183,15 @@ public class ClientHandler extends Thread {
 		switch (key) {
 		//OPCIJA NASUMICNOG POVEZIVANJA
 		case "R": {
-			for (WaitMonitor waiter : Server.waitersPair) {
-				if(waiter.getConnectionCounter() < 2) {
-					waiterPair = waiter;
-					//ovoj instanci ClientHandler klase dodeljuje se WaitMonitor objekat koji nije zauzelo
-					//vise od jedne instance ClientHandler klase kako bi se te dve instance sinhronizovale putem tog objekta
-					waiterPair.addConnection();
-					break;
+			synchronized(Server.waitersPair) {
+				for (WaitMonitor waiter : Server.waitersPair) {
+					if(waiter.getConnectionCounter() < 2) {
+						waiterPair = waiter;
+						//ovoj instanci ClientHandler klase dodeljuje se WaitMonitor objekat koji nije zauzelo
+						//vise od jedne instance ClientHandler klase kako bi se te dve instance sinhronizovale putem tog objekta
+						waiterPair.addConnection();
+						break;
+					}
 				}
 			}
 			pairRandom();	//pokrece se metoda koja vrsi "nasumicno povezivanje"	
@@ -266,6 +272,7 @@ public class ClientHandler extends Thread {
 				}
 				if(isQuit) {
 					if(exit.getIsExit()) {
+						askToPlayAgain = false;
 						return;
 					} else {
 						clientOutput.println("Protivnik je napustio igru.");
@@ -330,6 +337,7 @@ public class ClientHandler extends Thread {
 				}
 				if(isQuit) {
 					if(exit.getIsExit()) {
+						askToPlayAgain = false;
 						return;
 					} else {
 						clientOutput.println("Protivnik je napustio igru.");
@@ -403,6 +411,7 @@ public class ClientHandler extends Thread {
 					}
 					if(isQuit) {
 						if(exit.getIsExit()) {
+							askToPlayAgain = false;
 							return;
 						} else {
 							clientOutput.println("Protivnik je napustio igru.");
@@ -430,21 +439,47 @@ public class ClientHandler extends Thread {
 		return randomAsocijacija;
 	}
 	
-	
 	private void pairQuit() {
 		if(pair != null) pair.setIsQuit(true);
 	}
-	private void finish() {
-		isQuit = true;
+	private void waiterPairEnd() {
 		if(waiterPair != null) { 
 			waiterPair.removeConnection();
-			//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
-			synchronized(Server.waitersPair) {
-				if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
-					Server.waitersPair.remove(waiterPair);
-				}
-			}
+			waiterPair.paired = false;
 			waiterPair = null;
+		}
+	}
+	private void isPlayAgain() throws IOException {
+		if(clientInput.readLine().equals("Play again!")) {
+			askToPlayAgain = true;
+			isQuit = false;
+			pair = null;
+			isPaired = false;
+			code = null;
+			rec = null;
+			isSlagalicaPlayed = false;
+			isSlagalicaPlayedOfPair = false;
+			slagalicaFinishedWord = null;
+			slagalicaFinishedWordOfPair = null;
+			myNumbers = null;
+			isMojBrojPlayed = false;
+			isMojBrojPlayedOfPair = false;
+			mojBrojFinishedNumber = 0;
+			mojBrojFinishedNumberOfPair = 0;
+			questionsArray = null;
+			isQuestionAnswered = false;
+			isQuestionAnsweredOfPair = false;
+			isCorrectAnswer = null;
+			isCorrectAnswerOfPair = null;
+		}
+	}
+	private void finish() {
+		isQuit = true;
+		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
+		synchronized(Server.waitersPair) {
+			if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
+				Server.waitersPair.remove(waiterPair);
+			}
 		}
 		if(code != null) {
 			synchronized(Server.codesList) {
@@ -466,22 +501,25 @@ public class ClientHandler extends Thread {
 			clientOutput = new PrintStream(socketCommunication.getOutputStream());
 			
 			setUsername();
-			try {
-				pairing();
-			} catch (ParseException e) {
-				setIsQuit(true);
+			while(!isQuit) {
+				try {
+					pairing();
+				} catch (ParseException e) {
+					setIsQuit(true);
+				}
+				if(!isQuit) {
+					startSlagalica();
+				}
+				if(!isQuit) {
+					startMojBroj();
+				}
+				if(!isQuit) {
+					startQuiz();
+				}
+				pairQuit();
+				waiterPairEnd();
+				if(askToPlayAgain) isPlayAgain();
 			}
-			if(!isQuit) {
-				startSlagalica();
-			}
-			if(!isQuit) {
-				startMojBroj();
-			}
-			if(!isQuit) {
-				startQuiz();
-			}
-			
-			pairQuit();
 			finish();
 			socketCommunication.close();
 			System.out.println("Konekcija zatvorena.");
@@ -492,6 +530,7 @@ public class ClientHandler extends Thread {
 					waiterPair.notify();
 				}
 			}
+			waiterPairEnd();
 			finish();
 			System.out.println("Konekcija zatvorena.");
 		} catch (InterruptedException e) {

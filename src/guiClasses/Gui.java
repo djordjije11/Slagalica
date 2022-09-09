@@ -55,7 +55,6 @@ public class Gui extends JFrame {
         this.setResizable(false);
         this.setLayout(null);
         initializeScoreLabels();
-        
         /*
         this.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) {

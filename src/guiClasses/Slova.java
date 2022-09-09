@@ -37,7 +37,6 @@ public class Slova extends Gui implements ActionListener {
     public void setMessageLabel(String text) {
     	if(text.equals("Protivnik je napustio igru.")) {
     		messageLabel.setText(text);
-    		return;
     	}else if(text.equals("Oba igraca bez bodova!")) {
     		//igraci ne dobijaju bodove
     		messageLabel.setText(text);

@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
+
+import javax.swing.JOptionPane;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,7 +34,6 @@ public class Client {
 	private static String usernameOfPair;
 	private static int scores = 0;
 	private static int scoresOfPair = 0;
-	
 	
 	private static void checkIfExit(String input) {
 		if(input.equals("Protivnik je napustio igru.")) {
@@ -193,13 +196,28 @@ public class Client {
 	}
 	
 	
-	private static void gameOver() {
-		new GameOver(username, usernameOfPair, scores, scoresOfPair);
+	private static void gameOver() throws InterruptedException {
+		new GameOver(waiter, username, usernameOfPair, scores, scoresOfPair, !isQuit);
+		synchronized(waiter) {
+			waiter.wait();
+		}
+		isQuit = false;
+		usernameGUI = null;
+		pairingGUI = null;
+		slagalicaGUI = null;
+		mojbrojGUI = null;
+		quizGUI = null;
+		usernameOfPair = null;
+		scores = 0;
+		scoresOfPair = 0;
+		serverOutput.println("Play again!");
+		return;
 	}
 	
 	public static void main(String[] args) {
 		//String ip = "192.168.0.18";
-		String ip = "localhost";
+		//String ip = "localhost";
+		String ip = JOptionPane.showInputDialog("Unesite IP adresu servera.");
 		int port = 9001;
 		try {
 			socketCommunication = new Socket(ip, port);
@@ -207,18 +225,20 @@ public class Client {
 			serverOutput = new PrintStream(socketCommunication.getOutputStream());
 			waiter = new WaitMonitor();
 			setUsername();	//klijent unosi username
-			pair();	//klijentu se dodeljuje drugi klijent, par
-			startSlagalica();
-			if(!isQuit) {
-				startMojBroj();	//zapocinje se igra Moj Broj
-			}
-			if(!isQuit) {
-				startQuiz();	//zapocinje se igra Kviz (Ko zna zna)
-			}
-			if(!isQuit) {
+			while (true) {
+				pair();	//klijentu se dodeljuje drugi klijent, par
+				startSlagalica();
+				if(!isQuit) {
+					startMojBroj();	//zapocinje se igra Moj Broj
+				}
+				if(!isQuit) {
+					startQuiz();	//zapocinje se igra Kviz (Ko zna zna)
+				}
 				gameOver();
 			}
-			socketCommunication.close();
+			//socketCommunication.close();
+		} catch (UnknownHostException e) {
+			JOptionPane.showMessageDialog(null, "Uneli ste nepoznatu IP adresu!", "GRESKA!", JOptionPane.ERROR_MESSAGE);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {

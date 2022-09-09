@@ -17,7 +17,7 @@ public class Quiz extends Gui implements ActionListener {
 	private JButton[] answersButton = new JButton[4];
 	private JLabel questionLabel;
 	private JButton nextButton;
-	private Questions[] pitanjaNiz = new Questions[4];
+	private Questions[] questionsArray = new Questions[4];
 	private String isCorrect;
 	private boolean isOver = false;
 	private JLabel vreme;
@@ -65,7 +65,12 @@ public class Quiz extends Gui implements ActionListener {
 		}
 		default:
 			messageLabel.setText(text);
-    		return;
+			try {
+				Thread.sleep(1500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    		this.dispose();
 		}
 	}
 	public String getIsCorrect() {
@@ -122,17 +127,17 @@ public class Quiz extends Gui implements ActionListener {
 	}
 	private void setPitanje() {
 		for (int i = 0; i < 4; i++) {
-			answersButton[i].setText(pitanjaNiz[questionCounter].getAnswer(i));
+			answersButton[i].setText(questionsArray[questionCounter].getAnswer(i));
 			answersButton[i].setEnabled(true);
 		}
 		nextButton.setEnabled(true);
-		questionLabel.setText(pitanjaNiz[questionCounter].getQuestion());
+		questionLabel.setText(questionsArray[questionCounter].getQuestion());
 		startTime();
 	}
 	public void addScores(int number, int numberForPair) {
 		super.addScores(number, numberForPair);
 		questionCounter++;
-		if(questionCounter < pitanjaNiz.length) {
+		if(questionCounter < questionsArray.length) {
 			isOver = false;
 			setPitanje();
 		} else {
@@ -140,9 +145,9 @@ public class Quiz extends Gui implements ActionListener {
 			dispose();
 		}
 	}
-	public Quiz(Questions[] pitanjaNiz, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
+	public Quiz(Questions[] questionsArray, WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
 		super(waiter, username, usernameOfPair, score, pairScore, serverOutput);
-		this.pitanjaNiz = pitanjaNiz;
+		this.questionsArray = questionsArray;
         this.setTitle("Kviz (Ko zna zna)");
         initializePitanje();
         initializeNextButton();
@@ -171,7 +176,7 @@ public class Quiz extends Gui implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		for (int i = 0; i < answersButton.length; i++) {
 			if(e.getSource() == answersButton[i]) {
-				if(answersButton[i].getText().equals(pitanjaNiz[questionCounter].getCorrectAnswer())) {
+				if(answersButton[i].getText().equals(questionsArray[questionCounter].getCorrectAnswer())) {
 					isCorrect = "yes";
 				} else {
 					isCorrect = "no";
