@@ -1,10 +1,8 @@
 package guiClasses;
 
 import javax.swing.*;
-
 import main.WaitMonitor;
 import mojbrojClasses.*;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintStream;
@@ -152,8 +150,6 @@ public class MojBroj extends Gui implements ActionListener {
         labelBroj = new JLabel("Trazeni broj: " + myNumbers.getWantedNumber());
         labelBroj.setBounds(136, 70, 100, 40);
         this.add(labelBroj);
-        
-
         //VREME
         vreme = new JLabel("60");
         vreme.setBounds(10, 20, 40, 40);
@@ -181,10 +177,8 @@ public class MojBroj extends Gui implements ActionListener {
                 }
             }
         };
-        //timer.schedule(task, 10000);
         timer.scheduleAtFixedRate(task, 0, 1000);
     }
-
     private void endButtons() {
         for (int i = 0; i < buttonBrojevi.length; i++){
             buttonBrojevi[i].setEnabled(false);
@@ -207,7 +201,6 @@ public class MojBroj extends Gui implements ActionListener {
         	waiter.notify();
         }
     }
-    
     private void end(){
     	String text = labelResult.getText();
         text = text.substring(new String("RACUN: ").length());

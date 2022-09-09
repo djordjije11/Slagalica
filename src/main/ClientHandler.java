@@ -48,8 +48,8 @@ public class ClientHandler extends Thread {
 	private String isCorrectAnswer;
 	private String isCorrectAnswerOfPair;
 	//ATRIBUTI ZA IGRU ASOCIJACIJE
-	private JSONObject asocijacijaPolja;
-	private boolean indikator = false;
+	//private JSONObject asocijacijaPolja;
+	//private boolean indikator = false;
 	
 	ClientHandler(Socket socketCommunication) {
 		this.socketCommunication = socketCommunication;
@@ -81,13 +81,6 @@ public class ClientHandler extends Thread {
 		}
 		return pitanja;
 	}
-	//ova metoda se ne koristi, ova ispod
-	private void createNewWaiterPair() {
-		Server.waitersPair.remove(waiterPair);
-		waiterPair = new WaitMonitor(2);
-		pair.waiterPair = waiterPair;
-		Server.waitersPair.add(waiterPair);
-	}
 	private void setUsername() throws IOException {
 		String input;
 		do {
@@ -117,13 +110,10 @@ public class ClientHandler extends Thread {
 					pair.myNumbers = this.myNumbers;
 					questionsArray = getRandomQuestions();
 					pair.questionsArray = this.questionsArray;
-					asocijacijaPolja = ucitajRandomAsocijaciju();
-					pair.asocijacijaPolja = this.asocijacijaPolja;
+					//asocijacijaPolja = ucitajRandomAsocijaciju();
+					//pair.asocijacijaPolja = this.asocijacijaPolja;
 					waiterPair.paired = true;
 					waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
-					/*
-					 *
-					 */
 					break;
 				}
 			}
@@ -161,8 +151,8 @@ public class ClientHandler extends Thread {
 						pair.myNumbers = this.myNumbers;
 						questionsArray = getRandomQuestions();
 						pair.questionsArray = this.questionsArray;
-						asocijacijaPolja = ucitajRandomAsocijaciju();
-						pair.asocijacijaPolja = this.asocijacijaPolja;
+						//asocijacijaPolja = ucitajRandomAsocijaciju();
+						//pair.asocijacijaPolja = this.asocijacijaPolja;
 						waiterPair.paired = true;
 						waiterPair.notify();	//obavestava se instanca koja ceka da bude povezana, da je povezana
 						code = null; client.code = null;	//kod kojim su klijenti povezani im vise nije potreban
@@ -178,14 +168,27 @@ public class ClientHandler extends Thread {
 		switch (key) {
 		//OPCIJA NASUMICNOG POVEZIVANJA
 		case "R": {
+			boolean skip = false;
 			synchronized(Server.waitersPair) {
 				for (WaitMonitor waiter : Server.waitersPair) {
-					if(waiter.getConnectionCounter() < 2) {
+					if(waiter.getConnectionCounter() == 1) {
 						waiterPair = waiter;
 						//ovoj instanci ClientHandler klase dodeljuje se WaitMonitor objekat koji nije zauzelo
 						//vise od jedne instance ClientHandler klase kako bi se te dve instance sinhronizovale putem tog objekta
 						waiterPair.addConnection();
+						skip = true;
 						break;
+					}
+				}
+				if(!skip) {
+					for (WaitMonitor waiter : Server.waitersPair) {
+						if(waiter.getConnectionCounter() == 0) {
+							waiterPair = waiter;
+							//ovoj instanci ClientHandler klase dodeljuje se WaitMonitor objekat koji nije zauzelo
+							//vise od jedne instance ClientHandler klase kako bi se te dve instance sinhronizovale putem tog objekta
+							waiterPair.addConnection();
+							break;
+						}
 					}
 				}
 			}
@@ -233,6 +236,7 @@ public class ClientHandler extends Thread {
 		}
 		default:
 			setIsQuit(true);
+			askToPlayAgain = false;
 			return;
 		}
 	}
@@ -470,7 +474,6 @@ public class ClientHandler extends Thread {
 	}
 	private void finish() {
 		isQuit = true;
-		//CUDNO, nekako iako izbrises iz waitersPair liste on ima drugog za dodeljivanje, super ali kako?
 		synchronized(Server.waitersPair) {
 			if(Server.waitersPair.contains(waiterPair) && waiterPair.getConnectionCounter() == 0) {
 				Server.waitersPair.remove(waiterPair);

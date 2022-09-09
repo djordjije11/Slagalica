@@ -31,7 +31,6 @@ public class MyNumbers {
     public int getVeciBroj() {
     	return veciBroj;
     }
-    
     public MyNumbers(int[] brojevi, int srednjiBroj, int veciBroj, int wantedNumber) {
     	this.brojevi = brojevi;
     	this.srednjiBroj = srednjiBroj;

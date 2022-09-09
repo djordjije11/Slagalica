@@ -2,7 +2,6 @@ package main;
 
 public class WaitMonitor {
 	public boolean paired = false;
-	
 	private int connectionCounter = 0;
 	
 	public void removeConnection() {

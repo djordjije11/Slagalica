@@ -3,7 +3,6 @@ package guiClasses;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -12,7 +11,6 @@ import javax.swing.JLabel;
 import main.WaitMonitor;
 
 public class GameOver extends JFrame implements ActionListener {
-
 	private JButton playAgainButton;
 	private WaitMonitor waiter;
 	

@@ -3,13 +3,11 @@ package guiClasses;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
-
 import main.WaitMonitor;
 
 public class Username extends JFrame implements ActionListener {
@@ -51,7 +49,7 @@ public class Username extends JFrame implements ActionListener {
         this.setSize(420, 400);
         this.setResizable(false);
         this.setLayout(null);
-        
+
         label1 = new JLabel("Unesite vas username:");
         label1.setBounds(140, 100, 170, 40);
         label2 = new JLabel();

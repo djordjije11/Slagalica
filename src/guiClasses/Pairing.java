@@ -57,12 +57,10 @@ public class Pairing extends JFrame implements ActionListener {
 		usernameLabel.setHorizontalAlignment((int) CENTER_ALIGNMENT);
 		usernameLabel.setBounds(40, 10, 340, 20);
 		this.add(usernameLabel);
-		
 		pairLabel = new JLabel();
 		pairLabel.setHorizontalAlignment((int) CENTER_ALIGNMENT);
 		pairLabel.setBounds(40, 370, 340, 20);
 		this.add(pairLabel);
-		
 		randomPairingButton = new JButton("NASUMICNO POVEZIVANJE");
 		randomPairingButton.setBounds(40, 30, 340, 70);
 		randomPairingButton.setFocusable(false);
@@ -78,7 +76,6 @@ public class Pairing extends JFrame implements ActionListener {
 		putCodeButton.setFocusable(false);
 		putCodeButton.addActionListener(this);
 		this.add(putCodeButton);
-		
 		codeArea = new TextArea();
 		codeArea.setBounds(80, 270, 280, 40);
 		sendCodeButton = new JButton("SEND");
@@ -92,7 +89,6 @@ public class Pairing extends JFrame implements ActionListener {
 		this.add(sendCodeButton);
 		this.setVisible(true);
 	}
-	
 	private void addAreaForCode() {
 		enableAreaForCode(true);
 		codeArea.setVisible(true);

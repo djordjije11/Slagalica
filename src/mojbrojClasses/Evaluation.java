@@ -46,7 +46,6 @@ public class Evaluation {
             double parseFactor() {
                 if (eat('+')) return +parseFactor(); // unary plus
                 if (eat('-')) return -parseFactor(); // unary minus
-
                 double x;
                 int startPos = this.pos;
                 if (eat('(')) { // parentheses
@@ -67,7 +66,6 @@ public class Evaluation {
                 } else {
                     throw new RuntimeException("Unexpected: " + (char)ch);
                 }
-
                 return x;
             }
         }.parse();

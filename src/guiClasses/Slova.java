@@ -14,8 +14,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Slova extends Gui implements ActionListener {
-    
-	static boolean ukljuciProveruReci = true; //BAZA NIJE POTPUNA PA SE PROMENOM OVE VREDNOSTI OMOGUCAVA ILI GASI PROVERA RECI U BAZI
+	static boolean ukljuciProveruReci = false; //BAZA NIJE POTPUNA PA SE PROMENOM OVE VREDNOSTI OMOGUCAVA ILI GASI PROVERA RECI U BAZI
     private JButton[] buttonSlova;
     private JButton buttonDelete;
     private JButton buttonFinish;
@@ -28,8 +27,6 @@ public class Slova extends Gui implements ActionListener {
     private JLabel labelResult;	
     private JLabel labelRec; 
     File citajTextFile = new File("baza\\baza_reci.txt");
-
-  
     
     public String getFinishedRec() {
     	return finishedRec;
@@ -96,26 +93,20 @@ public class Slova extends Gui implements ActionListener {
         buttonFinish.setFocusable(false);
         buttonFinish.addActionListener(this);
         this.add(buttonFinish);
-        
         labelResult = new JLabel("");
         labelResult.setBounds(10, 250, 400, 50);
         this.add(labelResult);
-        
         labelRec = new JLabel();
         labelRec.setBounds(100, 300, 300, 50);
         this.add(labelRec);
-
         //VREME
         vreme = new JLabel("60");
         vreme.setBounds(10, 20, 40, 40);
         this.add(vreme);
-        
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
-    	
 		this.setVisible(true);
-
         Timer timer = new Timer();
         task = new TimerTask(){
             int m = 60;
@@ -132,10 +123,8 @@ public class Slova extends Gui implements ActionListener {
                 }
             }
         };
-        //timer.schedule(task, 10000);
         timer.scheduleAtFixedRate(task, 0, 1000);
     }
-
     private void endButtons() {
         for (int i = 0; i < buttonSlova.length; i++){
             buttonSlova[i].setEnabled(false);
@@ -149,8 +138,6 @@ public class Slova extends Gui implements ActionListener {
         	waiter.notify();
         }
     }
-    
-    
     private static boolean daLiImaTaRec(File bazaFileWriter, String rec) throws FileNotFoundException, IOException {
 		String linijaString = "";
 		try(BufferedReader bReader= new BufferedReader(new FileReader(bazaFileWriter))){
@@ -165,7 +152,6 @@ public class Slova extends Gui implements ActionListener {
 	         return !ukljuciProveruReci;
 		}
 	}
-
 	public static int stringCompare(String str1, String str2) {
 	    int l1 = str1.length();
 	    int l2 = str2.length();
@@ -184,7 +170,6 @@ public class Slova extends Gui implements ActionListener {
 	        return 0;
 	    }
 	}
-    
     private void end(){
         try{
         	if(daLiImaTaRec(citajTextFile, labelResult.getText())) {
@@ -203,7 +188,6 @@ public class Slova extends Gui implements ActionListener {
             return;
         }
     }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         for(int i = 0; i < buttonSlova.length; i++){

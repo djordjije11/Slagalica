@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Random;
 
 public class ExitThread extends Thread {
-
 	private BufferedReader clientInput = null;
 	private WaitMonitor waiter;
 	private ClientHandler client;

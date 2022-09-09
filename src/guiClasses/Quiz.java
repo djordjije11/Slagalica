@@ -5,15 +5,12 @@ import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.swing.JButton;
 import javax.swing.JLabel;
-
 import main.WaitMonitor;
 import quizClasses.Questions;
 
 public class Quiz extends Gui implements ActionListener {
-
 	private JButton[] answersButton = new JButton[4];
 	private JLabel questionLabel;
 	private JButton nextButton;
@@ -151,15 +148,12 @@ public class Quiz extends Gui implements ActionListener {
         this.setTitle("Kviz (Ko zna zna)");
         initializePitanje();
         initializeNextButton();
-        
     	vreme = new JLabel("10");
         vreme.setBounds(10, 20, 40, 40);
         this.add(vreme);
-        
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
-    	
         this.setVisible(true);
         setPitanje();
 	}
