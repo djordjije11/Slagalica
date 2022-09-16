@@ -21,7 +21,7 @@ public class ExitThread extends Thread {
 	
 	@Override
 	public void run() {
-		//koriscenje Random klase moze da posluzi za proveravanje toga da li se svaka pokrenuta nit zavrsila
+		//using the Random class can be used to check whether each running thread has finished
 		int a = new Random().nextInt(1000);
 		try {
 			System.out.println(a + ". EXIT Nit se pokrenula");
@@ -31,7 +31,7 @@ public class ExitThread extends Thread {
 			isExit = true;
 			client.setIsQuit(true);
 			synchronized(waiter) {
-				waiter.notify();	//obavestava se ClientHandler instanca da je njena odgovarajuca Client instanca napustila igru
+				waiter.notify();	//notifying the ClientHandler instance that the client has quit
 			}
 			System.out.println(a + ". EXIT Nit se zavrsila");
 		}

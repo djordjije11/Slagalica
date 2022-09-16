@@ -13,22 +13,18 @@ import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Slova extends Gui implements ActionListener {
+public class Slova extends Game implements ActionListener {
 	static boolean ukljuciProveruReci = false; //BAZA NIJE POTPUNA PA SE PROMENOM OVE VREDNOSTI OMOGUCAVA ILI GASI PROVERA RECI U BAZI
     private JButton[] buttonSlova;
     private JButton buttonDelete;
     private JButton buttonFinish;
-    private JLabel messageLabel;
     private String slova;
-    private String finishedRec;	
-    private JLabel vreme;
-    private boolean isOver = false;
-    private TimerTask task;
+    private String finishedRec;
     private JLabel labelResult;	
     private JLabel labelRec; 
     File citajTextFile = new File("baza\\baza_reci.txt");
     
-    public String getFinishedRec() {
+    public String getResult() {
     	return finishedRec;
     }
     public void setMessageLabel(String text) {
@@ -64,7 +60,25 @@ public class Slova extends Gui implements ActionListener {
 		}
     	this.dispose();
     }
-    
+    private void startTime() {
+    	timer = new Timer();
+        task = new TimerTask(){
+            int m = 60;
+            @Override
+            public void run(){
+                if(isOver){
+                    return;
+                }
+                if(m > 0) {
+                    m--;
+                    timeLabel.setText(Integer.toString(m));
+                }else{
+                    end();
+                }
+            }
+        };
+        timer.scheduleAtFixedRate(task, 0, 1000);
+    }
     public Slova(String slova, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair, PrintStream serverOutput){
     	super(waiter, username, usernameOfPair, score, scoreOfPair, serverOutput);
     	this.slova = slova;
@@ -99,31 +113,15 @@ public class Slova extends Gui implements ActionListener {
         labelRec = new JLabel();
         labelRec.setBounds(100, 300, 300, 50);
         this.add(labelRec);
-        //VREME
-        vreme = new JLabel("60");
-        vreme.setBounds(10, 20, 40, 40);
-        this.add(vreme);
+        //timeLabel
+        timeLabel = new JLabel("60");
+        timeLabel.setBounds(10, 20, 40, 40);
+        this.add(timeLabel);
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
 		this.setVisible(true);
-        Timer timer = new Timer();
-        task = new TimerTask(){
-            int m = 60;
-            @Override
-            public void run(){
-                if(isOver){
-                    return;
-                }
-                if(m > 0) {
-                    m--;
-                    vreme.setText(Integer.toString(m));
-                }else{
-                    end();
-                }
-            }
-        };
-        timer.scheduleAtFixedRate(task, 0, 1000);
+        startTime();
     }
     private void endButtons() {
         for (int i = 0; i < buttonSlova.length; i++){

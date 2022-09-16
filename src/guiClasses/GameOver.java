@@ -7,7 +7,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-
 import main.WaitMonitor;
 
 public class GameOver extends JFrame implements ActionListener {

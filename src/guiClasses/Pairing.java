@@ -52,7 +52,6 @@ public class Pairing extends JFrame implements ActionListener {
         this.setSize(420, 450);
         this.setResizable(false);
         this.setLayout(null);
-        
 		usernameLabel = new JLabel("Zdravo " + username + "!");
 		usernameLabel.setHorizontalAlignment((int) CENTER_ALIGNMENT);
 		usernameLabel.setBounds(40, 10, 340, 20);

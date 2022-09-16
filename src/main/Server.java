@@ -8,10 +8,10 @@ import java.util.Random;
 import quizClasses.Questions;
 
 public class Server {
-	public static LinkedList<ClientHandler> onlineUsers = new LinkedList<ClientHandler>();	//svi klijenti koji su se konektovali
-	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<WaitMonitor>();
-	public static LinkedList<Questions> questionsList = new LinkedList<Questions>();	//baza svih pitanja za igru Kviz (Ko zna zna)
-	public static LinkedList<String> codesList = new LinkedList<String>();	//svi generisani kodovi za otvaranje sobe i pristupanje njima koji su aktivni
+	public static LinkedList<ClientHandler> onlineUsers = new LinkedList<ClientHandler>();	//all connected clients
+	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<WaitMonitor>();	//all used instances of a class created for synchronization between ClientHandler instances
+	public static LinkedList<Questions> questionsList = new LinkedList<Questions>();	//all questions for game Kviz (Ko zna zna)
+	public static LinkedList<String> codesList = new LinkedList<String>();	//all generated codes for creating game room and entering them
 	
 	private static void generateQuestionsList() {
 		Questions pitanje1 = new Questions(new String[]{"Scarface", "Dog Day Afternoon", "Mystic River", "Donnie Brasco"}, 
@@ -75,7 +75,7 @@ public class Server {
 	}
 	
 	public static void main(String[] args) {
-		generateQuestionsList();		//generise se baza koja sadrzi sva moguca pitanja za igru Kviz (Ko zna zna)
+		generateQuestionsList();
 		ServerSocket socket;
 		Socket socketCommunication;
 		int port = 9001;
@@ -88,14 +88,13 @@ public class Server {
 				if(connectionCounter % 2 == 0) {
 					waiterPair = new WaitMonitor();
 					waitersPair.add(waiterPair);
-					//na svaka dva nova klijenta pravi se nov objekat koji ce kasnije dodeliti dvojici spojenih igraca
-					//i on ce sluziti da bi se niti sinhronizovale
+					//one instance for synchronization is used by two threads
 				}
-				socketCommunication = socket.accept();	//prihvata se konekcija od klijenta (igraca)
-				connectionCounter++;	//ova promenljiva broji koliko se klijenata dosad pokrenulo, da bismo na svaka dva dodali waiterPair
+				socketCommunication = socket.accept();
+				connectionCounter++;	//counting every established connection
 				System.out.println("Konekcija je uspostavljena!");
 				ClientHandler client = new ClientHandler(socketCommunication);
-				client.start();	//pokrece se nova nit ClientHandler klase za svakog klijenta, kako bi ta nit sa serverske strane hendlovala klijenta
+				client.start();	//for every client, a new ClientHandler thread is being started
 			}
 		} catch (IOException e) {
 			System.out.println("SERVER PAO!");

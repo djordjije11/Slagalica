@@ -10,19 +10,16 @@ import javax.swing.JLabel;
 import main.WaitMonitor;
 import quizClasses.Questions;
 
-public class Quiz extends Gui implements ActionListener {
+public class Quiz extends Game implements ActionListener {
 	private JButton[] answersButton = new JButton[4];
 	private JLabel questionLabel;
 	private JButton nextButton;
 	private Questions[] questionsArray = new Questions[4];
 	private String isCorrect;
-	private boolean isOver = false;
-	private JLabel vreme;
 	private int questionCounter = 0;
-	private JLabel messageLabel;
-	TimerTask task;
 	
-	public void setMessage(String text) {
+	@Override
+	public void setMessageLabel(String text) {
 		switch (text) {
 		case "yes-yes": {
 			addScores(5, 5);
@@ -70,11 +67,12 @@ public class Quiz extends Gui implements ActionListener {
     		this.dispose();
 		}
 	}
-	public String getIsCorrect() {
+	@Override
+	public String getResult() {
 		return isCorrect;
 	}
 	private void startTime() {
-		Timer timer = new Timer();
+		timer = new Timer();
         task = new TimerTask(){
             int m = 10;
             @Override
@@ -84,10 +82,10 @@ public class Quiz extends Gui implements ActionListener {
                 }
                 if(m > 0) {
                     m--;
-                    vreme.setText(Integer.toString(m));
+                    timeLabel.setText(Integer.toString(m));
                 }else{
                     isCorrect = "nothing";
-                    deadButtons();
+                    endButtons();
                     synchronized(waiter) {
                     	waiter.notify();
                     }
@@ -104,7 +102,7 @@ public class Quiz extends Gui implements ActionListener {
         nextButton.addActionListener(this);
         this.add(nextButton);
 	}
-	private void initializePitanje() {
+	private void initializeQuestion() {
 		int x, y;
         for (int i = 0; i < 4; i++) {
 			answersButton[i] = new JButton();
@@ -122,7 +120,7 @@ public class Quiz extends Gui implements ActionListener {
         questionLabel.setFocusable(false);
         this.add(questionLabel);
 	}
-	private void setPitanje() {
+	private void setQuestion() {
 		for (int i = 0; i < 4; i++) {
 			answersButton[i].setText(questionsArray[questionCounter].getAnswer(i));
 			answersButton[i].setEnabled(true);
@@ -131,12 +129,13 @@ public class Quiz extends Gui implements ActionListener {
 		questionLabel.setText(questionsArray[questionCounter].getQuestion());
 		startTime();
 	}
-	public void addScores(int number, int numberForPair) {
+	@Override
+	protected void addScores(int number, int numberForPair) {
 		super.addScores(number, numberForPair);
 		questionCounter++;
 		if(questionCounter < questionsArray.length) {
 			isOver = false;
-			setPitanje();
+			setQuestion();
 		} else {
 			isOver = true;
 			dispose();
@@ -146,18 +145,18 @@ public class Quiz extends Gui implements ActionListener {
 		super(waiter, username, usernameOfPair, score, pairScore, serverOutput);
 		this.questionsArray = questionsArray;
         this.setTitle("Kviz (Ko zna zna)");
-        initializePitanje();
+        initializeQuestion();
         initializeNextButton();
-    	vreme = new JLabel("10");
-        vreme.setBounds(10, 20, 40, 40);
-        this.add(vreme);
+    	timeLabel = new JLabel("10");
+        timeLabel.setBounds(10, 20, 40, 40);
+        this.add(timeLabel);
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
         this.setVisible(true);
-        setPitanje();
+        setQuestion();
 	}
-	private void deadButtons() {
+	private void endButtons() {
 		for (int i = 0; i < answersButton.length; i++) {
 			answersButton[i].setEnabled(false);
 		}
@@ -175,7 +174,7 @@ public class Quiz extends Gui implements ActionListener {
 				} else {
 					isCorrect = "no";
 				}
-				deadButtons();
+				endButtons();
 				synchronized(waiter) {
 					waiter.notify();
 				}
@@ -184,7 +183,7 @@ public class Quiz extends Gui implements ActionListener {
 		}
 		if(e.getSource() == nextButton) {
 			isCorrect = "nothing";
-			deadButtons();
+			endButtons();
 			synchronized(waiter) {
 				waiter.notify();
 			}

@@ -49,7 +49,6 @@ public class Username extends JFrame implements ActionListener {
         this.setSize(420, 400);
         this.setResizable(false);
         this.setLayout(null);
-
         label1 = new JLabel("Unesite vas username:");
         label1.setBounds(140, 100, 170, 40);
         label2 = new JLabel();

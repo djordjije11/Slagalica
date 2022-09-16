@@ -1,6 +1,6 @@
 # Slagalica - Online Multiplayer Game
 
-This application is an online two-player game similar to Slagalica. It consists of three games: Reči, Moj Broj and Kviz (Ko zna zna). The players compete to see who can make the longest word from the given letters, who can calculate the required number from the received numbers, and who knows the answers to more questions.
+This application is an online two-player game similar to Slagalica. It consists of three different games: Slagalica (Reči), Moj Broj and Kviz (Ko zna zna). The players compete to see who can make the longest word from the given letters, who can calculate the required number from the received numbers, and who knows the answers to more questions.
 
 ## Connection
 

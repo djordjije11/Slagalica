@@ -9,7 +9,7 @@ import java.io.PrintStream;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MojBroj extends Gui implements ActionListener {
+public class MojBroj extends Game implements ActionListener {
     private JButton buttonSrednji;
     private JButton buttonVeci;
     private JButton[] buttonBrojevi;
@@ -24,29 +24,25 @@ public class MojBroj extends Gui implements ActionListener {
     private JButton buttonFinish;
     private JLabel labelBroj;       //LABELA ZA BROJ KOJI TREBA DA DOBIJEMO, RANDOM IZGENERISAN
     private JLabel labelResult;		//LABELA ZA BROJ KOJI SMO DOBILI RACUNANJEM, I ZA SAM ISPIS RACUNA
-    private JLabel messageLabel;
     private int result;         //BROJ KOJI SMO DOBILI RACUNANJEM
     private MyNumbers myNumbers;
     private int finishedNumber;	//RAZLIKA IZMEDJU TRAZENOG BROJA I DOBIJENOG, SLUZI DA BI SE UPOREDIO KASNIJE REZULTAT IZMEDJU PROTIVNIKA
-    private JLabel vreme;
-    private boolean isOver = false;
-    private TimerTask task;
 
-    static int countStringInString(String wholeString, String countPart){
+    private static int countStringInString(String wholeString, String countPart){
         if(wholeString == null || countPart == null){
             System.out.println("GRESKA PRILIKOM KORISCENJA countStringInString METODE.");
             return -1;
         }
         return wholeString.length() - wholeString.replace(countPart, "").length();
     }
-    static boolean arrayContains(int[] array, int number){
+    private static boolean arrayContains(int[] array, int number){
         for (int i = 0; i < array.length; i++){
             if(array[i] == number) return true;
         }
         return false;
     }
-    public int getFinishedNumber() {
-    	return finishedNumber;
+    public String getResult() {
+    	return Integer.toString(finishedNumber);
     }
     public void setMessageLabel(String text) {
     	if(text.equals("Pobedili ste!")) {
@@ -54,7 +50,7 @@ public class MojBroj extends Gui implements ActionListener {
     	} else if(text.equals("Izgubili ste!")) {
     		addScores(0, 20);
     	} else if(text.equals("Nereseno!")) {
-    		//igraci dobili isti broj
+    		//players played the same
     		addScores(10, 10);
     	}
     	messageLabel.setText(text);
@@ -65,12 +61,29 @@ public class MojBroj extends Gui implements ActionListener {
 		}
     	this.dispose();
     }
-    
+    private void startTime() {
+    	timer = new Timer();
+        task = new TimerTask(){
+            int m = 60;
+            @Override
+            public void run(){
+                if(isOver){
+                    return;
+                }
+                if(m > 0) {
+                    m--;
+                    timeLabel.setText(Integer.toString(m));
+                }else{
+                    end();
+                }
+            }
+        };
+        timer.scheduleAtFixedRate(task, 0, 1000);
+    }
     public MojBroj(MyNumbers myNumbers, WaitMonitor waiter, String username, String usernameOfPair, int score, int scoreOfPair, PrintStream serverOutput){
     	super(waiter, username, usernameOfPair, score, scoreOfPair, serverOutput);
     	this.myNumbers = myNumbers;
         this.setTitle("Moj Broj");
-        
         //INICIJALIZOVANJE PRVA 4 DUGMETA ZA BROJEVE
         int k = 0;
         buttonBrojevi = new JButton[4];
@@ -150,34 +163,15 @@ public class MojBroj extends Gui implements ActionListener {
         labelBroj = new JLabel("Trazeni broj: " + myNumbers.getWantedNumber());
         labelBroj.setBounds(136, 70, 100, 40);
         this.add(labelBroj);
-        //VREME
-        vreme = new JLabel("60");
-        vreme.setBounds(10, 20, 40, 40);
-        this.add(vreme);
-        
+        //timeLabel
+        timeLabel = new JLabel("60");
+        timeLabel.setBounds(10, 20, 40, 40);
+        this.add(timeLabel);
         messageLabel = new JLabel();
         messageLabel.setBounds(100, 300, 300, 50);
         this.add(messageLabel);
-    	
 		this.setVisible(true);
-
-        Timer timer = new Timer();
-        task = new TimerTask(){
-            int m = 60;
-            @Override
-            public void run(){
-                if(isOver){
-                    return;
-                }
-                if(m > 0) {
-                    m--;
-                    vreme.setText(Integer.toString(m));
-                }else{
-                    end();
-                }
-            }
-        };
-        timer.scheduleAtFixedRate(task, 0, 1000);
+		startTime();
     }
     private void endButtons() {
         for (int i = 0; i < buttonBrojevi.length; i++){

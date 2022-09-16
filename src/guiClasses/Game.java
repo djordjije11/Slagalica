@@ -1,12 +1,14 @@
 package guiClasses;
 
 import java.io.PrintStream;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import main.WaitMonitor;
 
-public class Gui extends JFrame {
+public abstract class Game extends JFrame {
 	protected String username;
 	protected String usernameOfPair;
 	protected JLabel scoreLabel;
@@ -15,7 +17,14 @@ public class Gui extends JFrame {
 	protected int pairScore = 0;
 	protected WaitMonitor waiter;
 	protected PrintStream serverOutput;
+	protected JLabel timeLabel;
+	protected boolean isOver = false;
+	protected JLabel messageLabel;
+	protected TimerTask task;
+	protected Timer timer;
 	
+	public abstract void setMessageLabel(String text);
+	public abstract String getResult();
 	public int getScores() {
 		return score;
 	}
@@ -31,16 +40,16 @@ public class Gui extends JFrame {
         this.add(scoreLabel);
         this.add(pairScoreLabel);
 	}
-	protected void updateScoreLabels() {
+	private void updateScoreLabels() {
 		scoreLabel.setText(username + ": " + score);
 		pairScoreLabel.setText(usernameOfPair + ": " + pairScore);
 	}
-	public void addScores(int number, int numberForPair) {
+	protected void addScores(int number, int numberForPair) {
 		score += number;
 		pairScore += numberForPair;
 		updateScoreLabels();
 	}
-	public Gui(WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
+	public Game(WaitMonitor waiter, String username, String usernameOfPair, int score, int pairScore, PrintStream serverOutput) {
 		this.waiter = waiter;
 		this.username = username;
 		this.usernameOfPair = usernameOfPair;
