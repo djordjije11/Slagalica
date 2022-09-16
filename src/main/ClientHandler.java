@@ -1,7 +1,6 @@
 package main;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -10,7 +9,6 @@ import java.util.LinkedList;
 import java.util.Random;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import slagalicaClasses.Rec;
 import mojbrojClasses.MyNumbers;
@@ -47,9 +45,6 @@ public class ClientHandler extends Thread {
 	private boolean isQuestionAnsweredOfPair = false;
 	private String isCorrectAnswer;
 	private String isCorrectAnswerOfPair;
-	//ATRIBUTI ZA IGRU ASOCIJACIJE
-	//private JSONObject asocijacijaPolja;
-	//private boolean indikator = false;
 	
 	ClientHandler(Socket socketCommunication) {
 		this.socketCommunication = socketCommunication;
@@ -285,11 +280,11 @@ public class ClientHandler extends Thread {
 		if(slagalicaFinishedWord.length() > slagalicaFinishedWordOfPair.length()) {
 			clientOutput.println(slagalicaFinishedWord.length());
 		} else if(slagalicaFinishedWord.length() < slagalicaFinishedWordOfPair.length()) {
-			clientOutput.println((slagalicaFinishedWordOfPair.length()*-1));
+			clientOutput.println((slagalicaFinishedWordOfPair.length() * -1));
 		} else if(slagalicaFinishedWord.length() == 0 && slagalicaFinishedWordOfPair.length() == 0) {
 			clientOutput.println("Oba igraca bez bodova!");
 		} else {
-			clientOutput.println((slagalicaFinishedWordOfPair.length()+100));
+			clientOutput.println((slagalicaFinishedWordOfPair.length() + 100));
 		}
 		if(exit.isAlive()) exit.join();
 	}
@@ -426,16 +421,6 @@ public class ClientHandler extends Thread {
 			isQuestionAnswered = false; isCorrectAnswer = null; isQuestionAnsweredOfPair = false; isCorrectAnswerOfPair = null;
 			i++;
 		} while(i < 5);	//ponavlja se 5 puta jer igra sadrzi 5 pitanja, dakle 5 poteza
-	}
-	private JSONObject ucitajRandomAsocijaciju() throws IOException, ParseException {
-		JSONParser jsonparser = new JSONParser();
-		JSONObject randomAsocijacija = null;
-		FileReader fr = new FileReader("baza\\asocijacije.json");
-		JSONObject jsonObjekat = (JSONObject) jsonparser.parse(fr);
-		JSONArray nizAsocijacije = (JSONArray) jsonObjekat.get("Asocijacije");
-		randomAsocijacija = (JSONObject) nizAsocijacije.get(new Random().nextInt(nizAsocijacije.size()));
-		fr.close();
-		return randomAsocijacija;
 	}
 	
 	private void pairQuit() {
