@@ -14,7 +14,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Slova extends Game implements ActionListener {
-	static boolean ukljuciProveruReci = false; //BAZA NIJE POTPUNA PA SE PROMENOM OVE VREDNOSTI OMOGUCAVA ILI GASI PROVERA RECI U BAZI
+	static boolean ukljuciProveruReci = false; //database is not complete, so checking if the word is valid is turned off
     private JButton[] buttonSlova;
     private JButton buttonDelete;
     private JButton buttonFinish;
@@ -31,7 +31,7 @@ public class Slova extends Game implements ActionListener {
     	if(text.equals("Protivnik je napustio igru.")) {
     		messageLabel.setText(text);
     	}else if(text.equals("Oba igraca bez bodova!")) {
-    		//igraci ne dobijaju bodove
+    		//players don't get points
     		messageLabel.setText(text);
     	} else {
     		int l = Integer.parseInt(text);
