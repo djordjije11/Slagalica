@@ -12,7 +12,24 @@ public class Server {
 	public static LinkedList<WaitMonitor> waitersPair = new LinkedList<WaitMonitor>();	//all used instances of a class created for synchronization between ClientHandler instances
 	public static LinkedList<Questions> questionsList = new LinkedList<Questions>();	//all questions for game Kviz (Ko zna zna)
 	public static LinkedList<String> codesList = new LinkedList<String>();	//all generated codes for creating game room and entering them
+	public static int[] allCharacters = new int[27];
 	
+	private static void initializeAllCharacters() {
+		int asciiCode = 65;
+		int i = 0;
+		while(asciiCode < 91) {
+			if(asciiCode == 81) {
+				asciiCode++;
+			}
+			if(asciiCode == 87) asciiCode = 90;
+			allCharacters[i++] = asciiCode++;
+		}
+		allCharacters[i++] = 262;
+		allCharacters[i++] = 268;
+		allCharacters[i++] = 381;
+		allCharacters[i++] = 352;
+		allCharacters[i++] = 272;
+	}
 	private static void generateQuestionsList() {
 		Questions pitanje1 = new Questions(new String[]{"Scarface", "Dog Day Afternoon", "Mystic River", "Donnie Brasco"}, 
 				"U kom od navedenih filmova ne glumi Al Pacino?", "Mystic River");
@@ -75,6 +92,7 @@ public class Server {
 	}
 	
 	public static void main(String[] args) {
+		initializeAllCharacters();
 		generateQuestionsList();
 		ServerSocket socket;
 		Socket socketCommunication;

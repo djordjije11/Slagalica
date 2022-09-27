@@ -14,7 +14,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Slova extends Game implements ActionListener {
-	static boolean ukljuciProveruReci = false; //database is not complete, so checking if the word is valid is turned off
     private JButton[] buttonSlova;
     private JButton buttonDelete;
     private JButton buttonFinish;
@@ -22,7 +21,7 @@ public class Slova extends Game implements ActionListener {
     private String finishedRec;
     private JLabel labelResult;	
     private JLabel labelRec; 
-    File citajTextFile = new File("baza\\baza_reci.txt");
+    File wordsFile = new File("database\\words_database.txt");
     
     public String getResult() {
     	return finishedRec;
@@ -136,41 +135,22 @@ public class Slova extends Game implements ActionListener {
         	waiter.notify();
         }
     }
-    private static boolean daLiImaTaRec(File bazaFileWriter, String rec) throws FileNotFoundException, IOException {
-		String linijaString = "";
-		try(BufferedReader bReader= new BufferedReader(new FileReader(bazaFileWriter))){
-	         while ((linijaString = bReader.readLine())!= null) {
-					String[] vrednostiStrings = linijaString.split(",");
-					for (int i = 0; i < vrednostiStrings.length; i++) {
-						if (stringCompare(rec, vrednostiStrings[i]) == 0) {
-							return true;
-						}
-					}
-				}
-	         return !ukljuciProveruReci;
+	
+	private static boolean isWordCorrect(File wordsDictionary, String word) throws FileNotFoundException, IOException {
+		String line = "";
+		BufferedReader bReader= new BufferedReader(new FileReader(wordsDictionary));
+		while ((line = bReader.readLine())!= null) {
+       	 	if (line.toUpperCase().equals(word)) {
+       	 		bReader.close();
+       	 		return true;
+       	 	}
 		}
-	}
-	public static int stringCompare(String str1, String str2) {
-	    int l1 = str1.length();
-	    int l2 = str2.length();
-	    int lmin = Math.min(l1, l2);
-	    for (int i = 0; i < lmin; i++) {
-	        int str1_ch = (int)str1.charAt(i);
-	        int str2_ch = (int)str2.charAt(i);
-	        if (str1_ch != str2_ch) {
-	            return 1;
-	        }
-	    }
-	    if (l1 != l2) {
-	        return 1;
-	    }
-	    else {
-	        return 0;
-	    }
+		bReader.close();
+        return false;
 	}
     private void end(){
         try{
-        	if(daLiImaTaRec(citajTextFile, labelResult.getText())) {
+        	if(isWordCorrect(wordsFile, labelResult.getText())) {
         		endButtons();
                 finishedRec = labelResult.getText();
                 return;
